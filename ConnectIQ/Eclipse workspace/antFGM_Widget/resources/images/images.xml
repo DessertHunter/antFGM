@@ -1,0 +1,8 @@
+<resources>
+    <bitmap id="id_arrow_unknown" filename="./white_arrow_unknown.gif" dithering="none" />
+    <bitmap id="id_arrow_constant" filename="./white_arrow_constant.gif" dithering="none" />
+    <bitmap id="id_arrow_falling_slow" filename="./white_arrow_falling_slow.gif" dithering="none" />
+    <bitmap id="id_arrow_falling" filename="./white_arrow_falling.gif" dithering="none" />
+    <bitmap id="id_arrow_rising" filename="./white_arrow_rising.gif" dithering="none" />
+    <bitmap id="id_arrow_rising_slow" filename="./white_arrow_rising_slow.gif" dithering="none" />
+</resources>

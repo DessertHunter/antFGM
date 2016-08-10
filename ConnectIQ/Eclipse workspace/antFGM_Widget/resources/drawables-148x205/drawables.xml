@@ -1,0 +1,5 @@
+<drawables>
+    <!-- Größeres Launcher-Icon mit 40x33 Pixel, wegen BUILD: WARNING: The launcher icon 'LauncherIcon' (32x32) is smaller than the specified launcher icon size of the device 'square_watch' (61x43). Padding will be added to the image to center it. -->
+	<!-- BUILD: ERROR: The specified icon is larger (63x43) than the allowed icon size (40x33) for vivoactive_hr_sim -->
+    <bitmap id="LauncherIcon" filename="launcher_icon.png" />
+</drawables>

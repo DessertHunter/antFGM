@@ -1,0 +1,33 @@
+    <!-- A centered layout for vívoactive HR[+] with 148x205. -->
+	<layout id="main_layout">
+	    <!--<drawable class="Background" />-->
+	    <label id="label" x="center" y="4" color="Gfx.COLOR_DK_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_XTINY" /><!-- FONT_TINY -->
+        	<param name="color">Gfx.COLOR_RED</param>
+        	<param name="x">4</param>
+        	<param name="y">72</param>
+        	<param name="width">140</param>
+        	<param name="height">46</param>
+    	</drawable>-->
+	    <label id="value" x="center" y="20"  text="@Strings.invalid_value" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_NUMBER_THAI_HOT" /><!-- FONT_NUMBER_HOT -->
+	    <label id="measurement_age" x="center" y="84" text="@Strings.outdated_value" color="Gfx.COLOR_LT_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+        <drawable id="trend" class="TrendDrawable">
+        	<param name="color">Gfx.COLOR_DK_GRAY</param>
+        	<param name="x">74</param>
+        	<param name="y">140</param>
+        	<param name="radius">26</param>
+    	</drawable>
+	    <label id="status" x="8" y="180" text="@Strings.status_default" color="Gfx.COLOR_BLUE" justification="Gfx.TEXT_JUSTIFY_LEFT" font="Gfx.FONT_TINY" />
+	    <label id="nfc_state" x="140" y="180" color="Gfx.COLOR_YELLOW" justification="Gfx.TEXT_JUSTIFY_RIGHT" font="Gfx.FONT_TINY" /><!-- FONT_SMALL -->
+	</layout>
+	<layout id="info_layout">
+	    <!--<drawable class="Background" />-->
+	    <label id="caption1" x="center" y="5" text="@Strings.info1" color="Gfx.COLOR_DK_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+	    <label id="line1" x="center" y="25" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
+	    <label id="caption2" x="center" y="55" text="@Strings.info2" color="Gfx.COLOR_DK_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+	    <label id="line2" x="center" y="75" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
+	    <label id="caption3" x="center" y="105" text="@Strings.info3" color="Gfx.COLOR_DK_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+	    <label id="line3" x="center" y="125" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
+	    <label id="caption4" x="center" y="155" text="@Strings.info4" color="Gfx.COLOR_DK_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+	    <label id="line4" x="center" y="175" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
+	</layout>
+</layouts>

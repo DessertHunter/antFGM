@@ -1,0 +1,20 @@
+<strings>
+    <string id="AppName">antFGM (Widget)</string>
+    
+    <string id="label">Glukose [mg/dL]</string>
+    
+    <string id="invalid_value">-1</string>
+    <string id="outdated_value">over 1h old!</string>
+    
+    <string id="status_default">---</string>
+    <string id="status_searching">Searching...</string>
+    <string id="status_unknown">Unknown!</string>
+    <string id="status_no_channel">No Channel!</string>
+    <string id="status_connected">Connected</string>
+    <string id="status_error">Error!</string>
+    
+    <string id="info1">Serialnumber</string>
+    <string id="info2">Hardware Version</string>
+    <string id="info3">Sardware Version</string>
+    <string id="info4">Model Number</string>
+</strings>

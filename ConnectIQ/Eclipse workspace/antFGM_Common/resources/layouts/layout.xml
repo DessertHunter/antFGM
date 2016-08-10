@@ -1,0 +1,3 @@
+<layout id="MainLayout">
+	<label id="status" x="center" y="center" text="@Strings.status_default" color="Gfx.COLOR_BLUE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />    
+</layout>

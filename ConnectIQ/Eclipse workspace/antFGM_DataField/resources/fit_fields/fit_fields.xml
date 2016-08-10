@@ -1,0 +1,3 @@
+<fitContributions>
+    <fitField id="0" displayInChart="true" displayInActivityLaps="true" displayInActivitySummary="true" sortOrder="0" precision="0" chartTitle="@Strings.fit0_graph_label" dataLabel="@Strings.fit0_data_label" unitLabel="@Strings.fit0_units" fillColor="#FF0000" />
+</fitContributions>

@@ -1,0 +1,24 @@
+<layouts>
+    <!-- A generic, centered layout. -->
+	<layout id="main_layout">
+	    <!--<drawable class="Background" />-->
+	    <label id="label" x="center" y="4" color="Gfx.COLOR_LT_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_XTINY" /><!-- FONT_TINY -->
+	    <label id="value" x="center" y="20" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_NUMBER_THAI_HOT" /><!-- FONT_NUMBER_HOT -->
+	    <drawable id="chart" class="ChartDrawable">
+        	<param name="color">Gfx.COLOR_RED</param>
+        	<param name="string">"Hello Custom Drawable!"</param><!-- TODO_CS: WEG -->
+        	<param name="x">4</param>
+        	<param name="y">62</param>
+        	<param name="width">140</param>
+        	<param name="height">46</param>
+    	</drawable>
+        <drawable id="trend" class="TrendDrawable">
+        	<param name="color">Gfx.COLOR_DK_GRAY</param>
+        	<param name="x">center</param>
+        	<param name="y">center</param>
+        	<param name="radius">32</param>
+    	</drawable>
+	    <label id="status" x="center" y="180" color="Gfx.COLOR_BLUE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" /><!-- FONT_SMALL -->
+	    <label id="nfc_state" x="135" y="180" color="Gfx.COLOR_YELLOW" justification="Gfx.TEXT_JUSTIFY_RIGHT" font="Gfx.FONT_SMALL" />
+	</layout>
+</layouts>
