@@ -4,7 +4,7 @@
     <string id="label">Glukose [mg/dL]</string>
 
     <string id="invalid_value">-1</string>
-    <string id="outdated_value">Über eine Stunde alt!</string>
+    <string id="outdated_value">Veraltet!</string>
 	
     <string id="fit0_data_label">Glukose</string>
     <string id="fit0_graph_label">Glukoseverlauf</string>

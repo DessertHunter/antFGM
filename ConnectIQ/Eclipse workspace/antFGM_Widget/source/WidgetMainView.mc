@@ -52,7 +52,7 @@ class WidgetMainView extends Ui.View {
 
     //! Load your resources here
     function onLayout(dc) {
-        setLayout(Rez.Layouts.main_layout(dc));
+        View.setLayout(Rez.Layouts.main_layout(dc));
 
         mTrend = View.findDrawableById("trend");
         

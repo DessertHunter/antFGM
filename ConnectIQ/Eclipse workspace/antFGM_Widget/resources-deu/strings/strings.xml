@@ -1,0 +1,25 @@
+<strings>
+    <string id="AppName">antFGM (Widget)</string>
+    
+    <string id="label">Glukose [mg/dL]</string>
+    
+    <string id="invalid_value">-1</string>
+    <string id="outdated_value">Veraltet!</string>
+    
+    <string id="status_default">---</string>
+    <string id="status_searching">Suche...</string>
+    <string id="status_unknown">Unbekannt!</string>
+    <string id="status_no_channel">Keine Verbindung!</string>
+    <string id="status_connected">Verbunden</string>
+    <string id="status_error">Fehler!</string>
+    
+    <string id="nfc_state_unknown">---</string>
+    <string id="nfc_state_default">NFC initialisiert/bereit</string>
+    <string id="nfc_state_sleeping">NFC schläft</string>
+    <string id="nfc_state_tag_in_range">NFC Tag in Reichweite</string>
+    
+    <string id="info1">Seriennummer</string>
+    <string id="info2">Hardware Version</string>
+    <string id="info3">Software Version</string>
+    <string id="info4">Model Nummer</string>
+</strings>
