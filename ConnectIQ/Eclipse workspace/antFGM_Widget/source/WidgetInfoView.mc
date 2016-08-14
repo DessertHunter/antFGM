@@ -7,7 +7,7 @@ using Toybox.System as Sys;
 using Toybox.Test as Test;
 
 
-class LWidgetInfoView extends Ui.View {
+class WidgetInfoView extends Ui.View {
 
     hidden var mSensor; // class ANT_FGM_Sensor
 

@@ -54,11 +54,10 @@ class WidgetMainView extends Ui.View {
     function onLayout(dc) {
         setLayout(Rez.Layouts.main_layout(dc));
 
-        // Default-Werte setzen (die noch nicht per layout.xml gesetzt wurden)
-        View.findDrawableById("label").setText(Rez.Strings.label);
-        View.findDrawableById("nfc_state").setText("?");
-
         mTrend = View.findDrawableById("trend");
+        
+        // TODO: DEBUG
+        Sys.print("dc Width="); Sys.print(dc.getWidth()); Sys.print("; Height="); Sys.println(dc.getHeight()); 
     }
 
     //! Called when this View is brought to the foreground. Restore
@@ -71,12 +70,12 @@ class WidgetMainView extends Ui.View {
 
     function callbackUpdateTimer()
     {
-        Ui.requestUpdate(); // GUI neu zeichnen!
+        Ui.requestUpdate();
     }
 
     //! Update the view
     function onUpdate(dc) {
-        // Zuerst die View aktualiesieren:
+        // First update View:
 
         // Update status
         var new_status_text = Rez.Strings.status_unknown;
@@ -139,13 +138,10 @@ class WidgetMainView extends Ui.View {
 
                     mAlerting.doUpdate(glucose_value);
 
-                    //Test.assertMessage(glucose_value > 10, "Glukosewert zu niedrig!");
-                    //Test.assertMessage(glucose_value < 500, "Glukosewert zu hoch!!");
-
                     mArrowIndex =  mSensor.data.glucosePrediction;
 
                     mTrend.setArrow(mArrowIndex);
-                    // Farbe:
+                    // TODO: Farben:
                     // COLOR_LT_GRAY = 0xAAAAAA Light Gray
                     // COLOR_DK_GRAY = 0x555555 Dark Gray
                     // COLOR_RED = 0xFF0000 Red
@@ -212,7 +208,7 @@ class WidgetMainView extends Ui.View {
         View.onUpdate(dc);
 
         /**********************************************************************************/
-        // Ab hier ï¿½berzeichnen wir das Layout
+        // Ab hier Überzeichnen wir das Layout
     }
 
 

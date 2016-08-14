@@ -3,7 +3,9 @@
 //!
 using Toybox.Ant as Ant;
 using Toybox.System as Sys;
+using Toybox.Test as Test;
 using Toybox.Time as Time;
+
 
 //! Anglehnt an: Bluetooth CGM Profil @see: https://www.bluetooth.org/docman/handlers/DownloadDoc.ashx?doc_id=294793
 //! 
@@ -51,6 +53,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
         var sequenceNumber; // uint8_t
         var glucoseValue; // uint16_t
         var glucosePrediction; // uint8_t
+        var glucoseClimbSinkRate; // int8_t
         var timeOffset; // uint16_t
         var momentLastMeasurement; // class Moment
         
@@ -97,12 +100,12 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
     class MeasurementDataPage
     {
         static const PAGE_NUMBER = 0;
-        // TODO: static const INVALID_GLUCOSE_VALUE = 0xFFFF;
+        static const INVALID_GLUCOSE_VALUE = 0xFFFF;
 
         static function parse(payload, data)
         {
             // payload
-            // [1] reserved[1]
+            // [1] glucose_climb_sink_rate
             // [2] glucose_prediction
             // [3] time_offset_LSB
             // [4] time_offset_MSB
@@ -112,6 +115,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
             data.sequenceNumber = payload[5];
             data.glucoseValue = parseGlucose(payload);
             data.glucosePrediction = parseGlucosePrediction(payload);
+            data.glucoseClimbSinkRate = payload[1];
             data.timeOffset = parseTimeOffset(payload);
             
             // Check if the data has changed
@@ -128,7 +132,9 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
 
         static hidden function parseGlucose(payload)
         {
-           return (payload[6] | ((payload[7] & 0x0F) << 8));
+           var glucose_value = (payload[6] | ((payload[7] & 0x0F) << 8));
+           //Test.assertNotEqualMessage(glucose_value, INVALID_GLUCOSE_VALUE, "INVALID_GLUCOSE_VALUE parsed");
+           return glucose_value;
         }
 
         static hidden function parseTimeOffset(payload)

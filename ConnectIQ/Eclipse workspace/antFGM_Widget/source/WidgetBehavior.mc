@@ -34,12 +34,12 @@ class WidgetBehavior extends Ui.BehaviorDelegate
       {
         // ur nächstne Seite: Infoseite
         mPageNo++;
-        Ui.switchToView(new LibreANT_WidgetInfoView(mSensor), self, SLIDE_RIGHT);
+        Ui.switchToView(new WidgetInfoView(mSensor), self, SLIDE_RIGHT);
       }
       else
       {
         // Wieder zur Hauptseite
-        Ui.switchToView(new LibreANT_WidgetMainView(mSensor), self, SLIDE_RIGHT);
+        Ui.switchToView(new WidgetMainView(mSensor), self, SLIDE_RIGHT);
         mPageNo = INITIAL_PAGE_NO;
       }
     }
@@ -51,12 +51,12 @@ class WidgetBehavior extends Ui.BehaviorDelegate
 
         if( swipe == SWIPE_RIGHT )
         {
-            Sys.println("SWIPE_RIGHT");
+            Sys.println("WidgetBehavior: SWIPE_RIGHT");
             self.onNextPage(); // Ersatzweise
         }
         else if( swipe == SWIPE_LEFT )
         {
-            Sys.println("SWIPE_LEFT");
+            Sys.println("WidgetBehavior: SWIPE_LEFT");
             self.onPreviousPage(); // Ersatzweise
         }
 
@@ -67,7 +67,7 @@ class WidgetBehavior extends Ui.BehaviorDelegate
     //! When a screen tap event occurs, onTap() is called. This is sent if the user taps (quickly presses and releases) the screen.
     function onTap(evt) 
     {
-        //Sys.println("ON_TAP");
+        //Sys.println("WidgetBehavior: ON_TAP");
         self.onNextPage(); // Ersatzweise
 
         return true;
@@ -78,7 +78,7 @@ class WidgetBehavior extends Ui.BehaviorDelegate
     // @return [Boolean] true if handled, false otherwise
     function onNextPage()
     {
-        //Sys.println("NEXT_PAGE");
+        //Sys.println("WidgetBehavior: NEXT_PAGE");
         switchToNextPage();
         return true;
     }
@@ -87,15 +87,15 @@ class WidgetBehavior extends Ui.BehaviorDelegate
     // @return [Boolean] true if handled, false otherwise
     function onPreviousPage()
     {
-        Sys.println("PREVIOUS_PAGE");
-        return false; // TODO_CS: true?
+        Sys.println("WidgetBehavior: PREVIOUS_PAGE");
+        return false; // TODO: true?
     }
 
     // When a menu behavior occurs, onMenu() is called.
     // @return [Boolean] true if handled, false otherwise
     function onMenu()
     {
-        Sys.println("ON_MENU");
+        Sys.println("WidgetBehavior: ON_MENU");
         return false;
     }
 
@@ -104,7 +104,7 @@ class WidgetBehavior extends Ui.BehaviorDelegate
     function onBack()
     {
         // Taste "Zurück" beendet auf der vivoactive HR das Widget
-        Sys.println("ON_BACK");
+        Sys.println("WidgetBehavior: ON_BACK");
         return false;
     } 
 
@@ -112,7 +112,7 @@ class WidgetBehavior extends Ui.BehaviorDelegate
     // @return [Boolean] true if handled, false otherwise
     function onNextMode()
     {
-        Sys.println("ON_NEXT_MODE");
+        Sys.println("WidgetBehavior: ON_NEXT_MODE");
         return false;
     }
 
@@ -120,7 +120,7 @@ class WidgetBehavior extends Ui.BehaviorDelegate
     // @return [Boolean] true if handled, false otherwise
     function onPreviousMode()
     {
-        Sys.println("ON_PREVIOUS_MODE");
+        Sys.println("WidgetBehavior: ON_PREVIOUS_MODE");
         return false;
     }
 }

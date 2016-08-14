@@ -1,24 +1,38 @@
 <layouts>
     <!-- A generic, centered layout. -->
+    <!--    Edge 820: 200x225px -->
+    <!--    Edge 1000: 240x360px -->
 	<layout id="main_layout">
-	    <!--<drawable class="Background" />-->
-	    <label id="label" x="center" y="4" color="Gfx.COLOR_LT_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_XTINY" /><!-- FONT_TINY -->
-	    <label id="value" x="center" y="20" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_NUMBER_THAI_HOT" /><!-- FONT_NUMBER_HOT -->
-	    <drawable id="chart" class="ChartDrawable">
+	    <!-- TODO: <drawable class="Background" />-->
+	    <label id="label" x="center" y="5" text="@Strings.label" color="Gfx.COLOR_LT_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+	    <label id="value" x="center" y="25" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_NUMBER_THAI_HOT" />
+	    <!-- TODO: <drawable id="chart" class="ChartDrawable">
         	<param name="color">Gfx.COLOR_RED</param>
-        	<param name="string">"Hello Custom Drawable!"</param><!-- TODO_CS: WEG -->
+        	<param name="string">"Hello Custom Drawable!"</param>
         	<param name="x">4</param>
         	<param name="y">62</param>
         	<param name="width">140</param>
         	<param name="height">46</param>
-    	</drawable>
+    	</drawable>-->
+	    <label id="measurement_age" x="center" y="84" text="@Strings.outdated_value" color="Gfx.COLOR_LT_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
         <drawable id="trend" class="TrendDrawable">
         	<param name="color">Gfx.COLOR_DK_GRAY</param>
-        	<param name="x">center</param>
+        	<param name="x">220</param>
         	<param name="y">center</param>
         	<param name="radius">32</param>
     	</drawable>
-	    <label id="status" x="center" y="180" color="Gfx.COLOR_BLUE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" /><!-- FONT_SMALL -->
-	    <label id="nfc_state" x="135" y="180" color="Gfx.COLOR_YELLOW" justification="Gfx.TEXT_JUSTIFY_RIGHT" font="Gfx.FONT_SMALL" />
+	    <label id="status" x="center" y="200" text="@Strings.status_default" color="Gfx.COLOR_BLUE" justification="Gfx.TEXT_JUSTIFY_LEFT" font="Gfx.FONT_TINY" />
+	    <label id="nfc_state" x="center" y="200" text="@Strings.nfc_state_unknown" color="Gfx.COLOR_YELLOW" justification="Gfx.TEXT_JUSTIFY_RIGHT" font="Gfx.FONT_TINY" />
 	</layout>
+	<layout id="info_layout">
+	    <!-- TODO: <drawable class="Background" />-->
+	    <label id="caption1" x="center" y="5" text="@Strings.info1" color="Gfx.COLOR_DK_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+	    <label id="line1" x="center" y="25" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
+	    <label id="caption2" x="center" y="55" text="@Strings.info2" color="Gfx.COLOR_DK_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+	    <label id="line2" x="center" y="75" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
+	    <label id="caption3" x="center" y="105" text="@Strings.info3" color="Gfx.COLOR_DK_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+	    <label id="line3" x="center" y="125" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
+	    <label id="caption4" x="center" y="155" text="@Strings.info4" color="Gfx.COLOR_DK_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+	    <label id="line4" x="center" y="175" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
+	</layout>    	
 </layouts>

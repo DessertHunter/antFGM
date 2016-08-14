@@ -67,17 +67,9 @@ class DataFieldView extends Ui.DataField {
             // Units provides a file internal units field.
             mGlucoseFitField = DataField.createField("current_glucose", GLUCOSE_FIT_FIELD_ID, FitContributor.DATA_TYPE_UINT16, {
                 :count => 1, // The number of elements to add to the field if it is an array (Default 1)
-                :mesgType => FitContributor.MESG_TYPE_SESSION, // The message type that this field should be added to. Defaults to MESG_TYPE_RECORD if not provided.
+                :mesgType => FitContributor.MESG_TYPE_RECORD, // The message type that this field should be added to. Defaults to MESG_TYPE_RECORD if not provided.
                 :units => "mg/dL" // The display units as a String. This should use the current device language.
                 });
-    
-            //var info = Act.getActivityInfo();
-    
-            //! If the activity timer is greater than 0, then we don't know the lap or timer state.
-            //if( (info.timerTime != null) && (info.timerTime > 0) )
-            //{
-                //mLapCertainty = "?";
-            //}
         }
 
     }
@@ -100,7 +92,6 @@ class DataFieldView extends Ui.DataField {
     //! This is called each time a lap is created, so increment the lap number.
     function onTimerLap()
     {
-        //mLapNumber++;
     }
 
     //! The timer was started, so set the state to running.
@@ -130,9 +121,7 @@ class DataFieldView extends Ui.DataField {
     //! The timer was reeset, so reset all our tracking variables
     function onTimerReset()
     {
-        //mLapNumber = 0;
         mRecordFitState = STOPPED;
-        //mLapCertainty = "";
     }
     
 
@@ -166,8 +155,6 @@ class DataFieldView extends Ui.DataField {
             var valueView = View.findDrawableById("value");
             valueView.locY = valueView.locY + 7;
         }
-
-        View.findDrawableById("label").setText(Rez.Strings.label);
         
         // Prediction
         mArrows[GLUCOSE_PREDICTION_FALLING] = Ui.loadResource( Rez.Drawables.id_arrow_falling );
@@ -269,6 +256,13 @@ class DataFieldView extends Ui.DataField {
             var arrow_x = dc.getWidth() - (32+5);
             var arrow_y = dc.getHeight()/2 - (32/2);
             dc.drawBitmap(arrow_x, arrow_y, mArrows[mArrowIndex]);
+            
+            
+            if (RECORDING == mRecordFitState)
+            {
+		        dc.setColor(Gfx.COLOR_RED, Gfx.COLOR_TRANSPARENT);
+				dc.drawText(dc.getWidth() - 10, 10, Gfx.FONT_XTINY, Rez.Strings.is_recording, Gfx.TEXT_JUSTIFY_RIGHT);
+            }
         }
         catch( ex instanceof UnexpectedTypeException ) {
             // Code to handle the throw of UnexpectedTypeException

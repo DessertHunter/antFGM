@@ -4,11 +4,15 @@
 using Toybox.WatchUi as Ui;
 using Toybox.Application as App;
 using Toybox.Graphics as Gfx;
+using Toybox.System as Sys;
+using Toybox.Test as Test;
+
 
 class TrendDrawable extends Ui.Drawable {
 
     hidden var mColor;
     hidden var mX, mY, mRadius;
+    
         
     enum {
         GLUCOSE_PREDICTION_UNKNOWN,
@@ -20,7 +24,8 @@ class TrendDrawable extends Ui.Drawable {
         GLUCOSE_PREDICTION_SIZE
     }
     //hidden var mArrowRezIds = new [GLUCOSE_PREDICTION_SIZE];
-    hidden var mArrows = new [GLUCOSE_PREDICTION_SIZE];
+    hidden var mArrows = new [GLUCOSE_PREDICTION_SIZE]; // class BitmapResource
+	hidden var mArrowCenterOffsetX, mArrowCenterOffsetY;
     hidden var mArrowIndex = GLUCOSE_PREDICTION_UNKNOWN;
 
     function initialize(params) {
@@ -35,6 +40,8 @@ class TrendDrawable extends Ui.Drawable {
         mY = params.get(:y);
         mRadius = params.get(:radius);
         
+        Sys.print("Trend x="); Sys.print(mX); Sys.print("; y="); Sys.print(mY); Sys.print("; radius="); Sys.println(mRadius);
+        
         // Prediction
         //mArrowRezIds[GLUCOSE_PREDICTION_UNKNOWN] = Rez.Drawables.id_arrow_unknown;
         //mArrowRezIds[GLUCOSE_PREDICTION_FALLING] = Rez.Drawables.id_arrow_falling;
@@ -48,6 +55,11 @@ class TrendDrawable extends Ui.Drawable {
         mArrows[GLUCOSE_PREDICTION_CONSTANT] = Ui.loadResource( Rez.Drawables.id_arrow_constant );
         mArrows[GLUCOSE_PREDICTION_RISING_SLOW] = Ui.loadResource( Rez.Drawables.id_arrow_rising_slow );
         mArrows[GLUCOSE_PREDICTION_RISING] = Ui.loadResource( Rez.Drawables.id_arrow_rising );
+        
+        mArrowCenterOffsetX = mArrows[GLUCOSE_PREDICTION_UNKNOWN].getWidth() / 2;
+        mArrowCenterOffsetY = mArrows[GLUCOSE_PREDICTION_UNKNOWN].getHeight() / 2;
+        
+        Test.assertMessage((mRadius > mArrowCenterOffsetX) && (mRadius > mArrowCenterOffsetY), "Trend radius is to small!");
     }
 
     function setColor(color) {
@@ -65,6 +77,6 @@ class TrendDrawable extends Ui.Drawable {
         // Arrow rechts mittig mit bisschen Platz zum Rand platzieren
         //View.findDrawableById("arrow").setBitmap(mArrowRezIds[mArrowIndex]);
         
-        dc.drawBitmap(mX-16, mY-16, mArrows[mArrowIndex]);
+        dc.drawBitmap(mX-mArrowCenterOffsetX, mY-mArrowCenterOffsetY, mArrows[mArrowIndex]);
     }
 }
