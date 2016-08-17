@@ -15,8 +15,8 @@ class Alerting {
     hidden var mOldValue; // Number
 
     hidden var mEnableVibrate; // boolean
-    hidden var mVibrateLow = [new Att.VibeProfile(100, 100), new Att.VibeProfile(0, 100), new Att.VibeProfile(100, 100)]; // Array of class VibeProfile
-    hidden var mVibrateHigh = [new Att.VibeProfile(50, 100), new Att.VibeProfile(10, 200), new Att.VibeProfile(100, 50)]; // Array of class VibeProfile
+    hidden var mVibrateLow; // Array of class VibeProfile
+    hidden var mVibrateHigh; // Array of class VibeProfile
 
     hidden var mEnableTone; // boolean
 
@@ -32,6 +32,11 @@ class Alerting {
         mOldValue = (upper_threshold - lower_threshold) / 2;
         
         mEnableVibrate = (Att has :vibrate);
+        if (mEnableVibrate)
+        {
+            mVibrateLow = [new Att.VibeProfile(100, 100), new Att.VibeProfile(0, 100), new Att.VibeProfile(100, 100)]; // Array
+    		mVibrateHigh = [new Att.VibeProfile(50, 100), new Att.VibeProfile(10, 200), new Att.VibeProfile(100, 50)]; // Array
+        }
         
         mEnableTone = (Att has :playTone);
     }

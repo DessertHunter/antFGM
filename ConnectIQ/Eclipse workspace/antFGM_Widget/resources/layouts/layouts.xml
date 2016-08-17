@@ -21,7 +21,7 @@
         	<param name="width">140</param>
         	<param name="height">46</param>
     	</drawable>-->
-	    <label id="status" x="center" y="200" text="@Strings.status_default" color="Gfx.COLOR_BLUE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
+	    <label id="status" x="center" y="190" text="@Strings.status_default" color="Gfx.COLOR_BLUE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
 	    <label id="nfc_state" x="center" y="220" text="@Strings.nfc_state_unknown" color="Gfx.COLOR_YELLOW" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_SMALL" />
 	</layout>
 	<layout id="info_layout">

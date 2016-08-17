@@ -8,14 +8,14 @@ using Toybox.Time as Time;
 
 
 //! Anglehnt an: Bluetooth CGM Profil @see: https://www.bluetooth.org/docman/handlers/DownloadDoc.ashx?doc_id=294793
-//! 
+//!
 //! Lifecyle: ANT-Channel: Closed -> Open -> Searching -> Connected -> Disconnected/Researching -> Closed
-//! 
+//!
 //! Communicating with ANT Sensors:
-//! Connect IQ provides a low level interface for communication with ANT and ANT+ sensors. 
-//! With this interface, an ANT channel can be created to send and receive ANT packets. 
-//! The ANT Generic interface is not available to watch faces. 
-//! Low and High priority search timeout for sensors differs from the basic ANT radio specification 
+//! Connect IQ provides a low level interface for communication with ANT and ANT+ sensors.
+//! With this interface, an ANT channel can be created to send and receive ANT packets.
+//! The ANT Generic interface is not available to watch faces.
+//! Low and High priority search timeout for sensors differs from the basic ANT radio specification
 //! to allow for interoperation with native ANT behavior on devices. These are limited to a maximum timeout of 30 seconds and 5 seconds respectively.
 class ANT_FGM_Sensor extends Ant.GenericChannel
 {
@@ -28,7 +28,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
     const LOW_PRI_TIMEOUT = 12; //! 30s Low Priority Search Timeout, (2.5s increments) that a receiving channel will wait for in order to start tracking a master. Limited to a maximum of 30 seconds (Range of 0 to 12).
     // High priority search not supported in data-fields. const HI_PRI_TIMEOUT = 2;   //! 5s High Priority Search Timeout, (2.5s increments) that a receiving channel will wait for in order to start tracking a master. Limited to a maximum of 5 seconds (Range of 0 to 2).
     const PROXIMITY_BIN = 0;    //! Disable proximity pairing
-    
+
     hidden var chanAssign;
 
     var data; // class FGM_Data
@@ -40,14 +40,14 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
     {
         enum {
             GLUCOSE_PREDICTION_UNKNOWN,
-            GLUCOSE_PREDICTION_FALLING, 
-            GLUCOSE_PREDICTION_FALLING_SLOW, 
-            GLUCOSE_PREDICTION_CONSTANT, 
-            GLUCOSE_PREDICTION_RISING_SLOW, 
+            GLUCOSE_PREDICTION_FALLING,
+            GLUCOSE_PREDICTION_FALLING_SLOW,
+            GLUCOSE_PREDICTION_CONSTANT,
+            GLUCOSE_PREDICTION_RISING_SLOW,
             GLUCOSE_PREDICTION_RISING,
             GLUCOSE_PREDICTION_SIZE
         }
-    
+
         // Page 0
         hidden var pastSequenceNumber; // um neue Daten zu erkennen
         var sequenceNumber; // uint8_t
@@ -56,19 +56,19 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
         var glucoseClimbSinkRate; // int8_t
         var timeOffset; // uint16_t
         var momentLastMeasurement; // class Moment
-        
+
         // Page 1
         var nfcState; // uint8_t
-        
+
         // Page 2:
         var manufacturerID; // Manufacturer ID
         var serialNumber; // uint16_t Serial Number
-        
+
         // Page 3:
         var hardwareVersion; // Hardware version
         var softwareVersion; // Software version
         var modelNumber;  // Model number
-        
+
         function initialize()
         {
             sequenceNumber = 0;
@@ -84,7 +84,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
             modelNumber = 0;
             momentLastMeasurement = new Time.Moment(0);
         }
-                
+
         function queryIsNewData()
         {
           if (pastSequenceNumber != sequenceNumber) // Neue Daten?
@@ -117,14 +117,14 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
             data.glucosePrediction = parseGlucosePrediction(payload);
             data.glucoseClimbSinkRate = payload[1];
             data.timeOffset = parseTimeOffset(payload);
-            
+
             // Check if the data has changed
             if (data.queryIsNewData())
             {
                 data.momentLastMeasurement = Time.now(); // Neue Werte
-            }            
+            }
         }
-        
+
         static hidden function parseGlucosePrediction(payload)
         {
            return payload[2]; //
@@ -142,34 +142,32 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
            return (payload[3] | ((payload[4] & 0x0F) << 8));
         }
     } // end class
-    
-    
+
+
     class SensorDataPage
     {
         static const PAGE_NUMBER = 1;
-        
+
         // TODO: andere data-Member beschreiben
         static function parse(payload, data)
         {
-            // TODO
-            
             // payload
             // [1-3] cumulative_operating_time[3]
             // [4-6] reserved[3]
             //   [7] nfc_state
             data.nfcState = payload[7];
-            
+
             // TODO: DEBUG
             Sys.print("New nfcState="); Sys.println(data.nfcState);
         }
-        
+
     } // end class
-    
-        
+
+
     class InfoDataPage2
     {
         static const PAGE_NUMBER = 2;
-        
+
         static function parse(payload, data)
         {
             // payload:
@@ -180,14 +178,14 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
             data.manufacturerID = payload[1];
             data.serialNumber = (payload[2] | ((payload[3] & 0x0F) << 8));
         }
-        
+
     } // end class InfoDataPage2
-    
-        
+
+
     class InfoDataPage3
     {
         static const PAGE_NUMBER = 3;
-        
+
         static function parse(payload, data)
         {
             // payload[1] = hw_version;
@@ -198,7 +196,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
             data.softwareVersion = payload[2];
             data.modelNumber = payload[3];
         }
-        
+
     } // end class InfoDataPage3
 
 
@@ -221,7 +219,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
             // High priority search not supported in data-fields. :searchTimeoutHighPriority => HI_PRI_TIMEOUT, // 0 = Pair to all transmitting sensors
             :searchThreshold => PROXIMITY_BIN
             // :networkKey64Bit => ?     // 64 bit network key TODO: Brauch ich glaube ich nicht wegen ChannelAssignment NETWORK_PLUS NETWORK_PUBLIC
-            } );          
+            } );
         GenericChannel.setDeviceConfig(deviceCfg);
 
         data = new FGM_Data();
@@ -247,7 +245,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
         try {
             //! Parse the payload
             var payload = msg.getPayload();
-    
+
             if( Ant.MSG_ID_BROADCAST_DATA == msg.messageId )
             {
                 var msg_page_number = (payload[0].toNumber() & 0x7F); // Anmerkung: Ohne Toggle Bit 7
@@ -257,11 +255,11 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
                     if(searching)
                     {
                         searching = false;
-                        
+
                         // Update our device configuration primarily to see the device number of the sensor we paired to
                         deviceCfg = GenericChannel.getDeviceConfig();
                     }
-                    
+
                     MeasurementDataPage.parse(payload, data);
                 }
                 else if (SensorDataPage.PAGE_NUMBER == msg_page_number)
@@ -294,7 +292,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
                     }
                     else if( Ant.MSG_CODE_EVENT_RX_FAIL_GO_TO_SEARCH == (payload[1] & 0xFF) )
                     {
-                        searching = true;                       
+                        searching = true;
                         // Sys.println("MSG_CODE_EVENT_RX_FAIL_GO_TO_SEARCH in ANT_FGM_Sensor::onMessage()");
                     }
                 }

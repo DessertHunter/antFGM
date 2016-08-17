@@ -49,3 +49,10 @@ local.properties
 
 # Code Recommenders
 .recommenders/
+
+# Keil uVision
+*.uvguix.*
+*_Secret.*
+JLinkLog.txt
+_build/
+nRF5_SDK10/
