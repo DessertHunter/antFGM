@@ -55,9 +55,8 @@ class WidgetMainView extends Ui.View {
         View.setLayout(Rez.Layouts.main_layout(dc));
 
         mTrend = View.findDrawableById("trend");
-        
-        // TODO: DEBUG
-        Sys.print("dc Width="); Sys.print(dc.getWidth()); Sys.print("; Height="); Sys.println(dc.getHeight()); 
+
+        // DEBUG Sys.print("dc Width="); Sys.print(dc.getWidth()); Sys.print("; Height="); Sys.println(dc.getHeight()); 
     }
 
     //! Called when this View is brought to the foreground. Restore

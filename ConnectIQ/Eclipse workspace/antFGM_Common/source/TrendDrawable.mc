@@ -40,7 +40,7 @@ class TrendDrawable extends Ui.Drawable {
         mY = params.get(:y);
         mRadius = params.get(:radius);
         
-        Sys.print("Trend x="); Sys.print(mX); Sys.print("; y="); Sys.print(mY); Sys.print("; radius="); Sys.println(mRadius);
+        // DEBUG Sys.print("Trend x="); Sys.print(mX); Sys.print("; y="); Sys.print(mY); Sys.print("; radius="); Sys.println(mRadius);
         
         // Prediction
         //mArrowRezIds[GLUCOSE_PREDICTION_UNKNOWN] = Rez.Drawables.id_arrow_unknown;

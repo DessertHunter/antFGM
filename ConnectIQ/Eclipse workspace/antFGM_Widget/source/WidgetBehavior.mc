@@ -96,6 +96,7 @@ class WidgetBehavior extends Ui.BehaviorDelegate
     function onMenu()
     {
         Sys.println("WidgetBehavior: ON_MENU");
+        self.onNextPage(); // Ersatzweise
         return false;
     }
 

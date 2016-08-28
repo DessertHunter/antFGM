@@ -1,5 +1,5 @@
 //!
-//! Copyright 2016 DessertHunter
+//! Copyright 2016 @DessertHunter
 //!
 using Toybox.System as Sys;
 using Toybox.Attention as Att;

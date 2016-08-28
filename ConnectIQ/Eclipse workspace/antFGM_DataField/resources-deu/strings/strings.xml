@@ -10,5 +10,8 @@
     <string id="fit0_graph_label">Glukoseverlauf</string>
     <string id="fit0_units">mg/dL</string>
     
-    <string id="is_recording">Aufzeichnung</string>
+    <!-- Settings -->
+    <string id="AppVersionTitle">Version</string>
+    <string id="EnableRecordingTitle">Aufzeichnung in der FIT-Datei aktivieren</string>
+    <string id="ShowRecIndicatorTitle">Zeigt den Aufzeichnungs-Indikator an</string>
 </strings>

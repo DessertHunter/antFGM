@@ -10,5 +10,8 @@
     <string id="fit0_graph_label">Glucose chart</string>
     <string id="fit0_units">mg/dL</string>
     
-    <string id="is_recording">Recording</string>
+    <!-- Settings -->
+    <string id="AppVersionTitle">Version</string>
+    <string id="EnableRecordingTitle">Enable recording to FIT-file</string>
+    <string id="ShowRecIndicatorTitle">Show record indicator</string>
 </strings>

@@ -22,4 +22,7 @@
     <string id="info2">Hardware Version</string>
     <string id="info3">Software Version</string>
     <string id="info4">Model Nummer</string>
+    
+    <!-- Settings -->
+    <string id="AppVersionTitle">Version</string>
 </strings>

@@ -14,20 +14,8 @@ class DataFieldView extends Ui.DataField {
     const ALERTING_UPPER_THRESHOLD = 200; // Oberer Schwellwert
     hidden var mAlerting; // class Aletring
     
-    // @see: http://developer.garmin.com/index.php/blog/post/connect-iq-2-the-full-circle
-    const ENABLE_FIT_RECORDING = true;
-
-    hidden var mGlucoseFitField; // class Toybox::FitContributor::Field
-    const GLUCOSE_FIT_FIELD_ID = 0; //type=Number; The unique Field Identifier for the Field
-
-    enum
-    {
-        STOPPED,
-        PAUSED,
-        RECORDING
-    }
-    hidden var mRecordFitState = STOPPED;
-
+    hidden var mFitRecording; // class FitRecording;
+    
 
     enum {
         GLUCOSE_PREDICTION_FALLING, 
@@ -51,77 +39,42 @@ class DataFieldView extends Ui.DataField {
         
         mAlerting = new Alerting(ALERTING_LOWER_THRESHOLD, ALERTING_UPPER_THRESHOLD);
         
-        // Used to create a new field. Field is updated in the FIT file by changing the the value of the data within the Field. This method is to allow data fields access to FIT recording without giving them access to the session.
-        if (ENABLE_FIT_RECORDING)
-        {
-            // ab ConnecIQ 1.3.0
-
-            // Create a new field in the session.
-            // Current namastes provides an file internal definition of the field
-            // Field id _must_ match the fitField id in resources or your data will not display!
-            // The field type specifies the kind of data we are going to store. For Record data this must be numeric, for others it can also be a string.
-            // The mesgType allows us to say what kind of FIT record we are writing.
-            //    FitContributor.MESG_TYPE_RECORD for graph information
-            //    FitContributor.MESG_TYPE_LAP for lap information
-            //    FitContributor.MESG_TYPE_SESSION` for summary information.
-            // Units provides a file internal units field.
-            mGlucoseFitField = DataField.createField("current_glucose", GLUCOSE_FIT_FIELD_ID, FitContributor.DATA_TYPE_UINT16, {
-                :count => 1, // The number of elements to add to the field if it is an array (Default 1)
-                :mesgType => FitContributor.MESG_TYPE_RECORD, // The message type that this field should be added to. Defaults to MESG_TYPE_RECORD if not provided.
-                :units => "mg/dL" // The display units as a String. This should use the current device language.
-                });
-        }
-
-    }
-
-    hidden function doRecordFitData()
-    {
-        if (RECORDING == mRecordFitState)
-        {
-            var glucose_value = 50 + (Math.rand() % 120);
-           
-            Sys.print("RecordFitData Glucose="); Sys.println(glucose_value);
-            mGlucoseFitField.setData(glucose_value);
-        }
-        else
-        {
-            Sys.println("RecordFitData not RECORDING!");
-        }
+        mFitRecording = new FitRecording(self);
     }
     
     //! This is called each time a lap is created, so increment the lap number.
     function onTimerLap()
     {
+    	mFitRecording.onTimerLap();
     }
 
     //! The timer was started, so set the state to running.
     function onTimerStart()
     {
-       mRecordFitState = RECORDING;
+       mFitRecording.setTimerRunning(true);
     }
 
     //! The timer was stopped, so set the state to stopped.
     function onTimerStop()
     {
-        mRecordFitState = STOPPED;
+        mFitRecording.setTimerRunning(false);
     }
 
     //! The timer was started, so set the state to running.
     function onTimerPause()
     {
-        mRecordFitState = PAUSED;
+        mFitRecording.setTimerRunning(false);
     }
 
     //! The timer was stopped, so set the state to stopped.
     function onTimerResume()
     {
-        mRecordFitState = RECORDING;
+        mFitRecording.setTimerRunning(true);
     }
 
-    //! The timer was reeset, so reset all our tracking variables
-    function onTimerReset()
-    {
-        mRecordFitState = STOPPED;
+	//! The timer was reeset, so reset all our tracking variables
+    function onTimerReset() {
+        mFitRecording.onTimerReset();
     }
     
 
@@ -172,6 +125,8 @@ class DataFieldView extends Ui.DataField {
         // See Activity.Info in the documentation for available information.
         // mValue = 0.0;
         
+        mFitRecording.compute(mSensor);
+        
         // DEBUG: Pfeil Animation
         if (mArrowIndex < (GLUCOSE_PREDICTION_SIZE-1))
         {
@@ -181,9 +136,6 @@ class DataFieldView extends Ui.DataField {
         {
             // Einmal durchgewechselt...
             mArrowIndex = GLUCOSE_PREDICTION_FALLING;
-            
-            // TODO: Aufruf korrigeren
-            doRecordFitData();
         }
         
         // Die Sensorwerte werden bei Empfang durch Ui.requestUpdate() aktualisiert, daher brauchen wir hier nichts machen!
@@ -193,7 +145,12 @@ class DataFieldView extends Ui.DataField {
     //! once a second when the data field is visible.
     function onUpdate(dc) {
         // Set the background color
-        View.findDrawableById("Background").setColor(getBackgroundColor());
+        var bg_drawable = View.findDrawableById("Background");
+        if (bg_drawable instanceof Background)
+        {
+            bg_drawable.setColor(getBackgroundColor());
+            bg_drawable.setRecording(mFitRecording.getIsRecording());
+        }
 
         // Set the foreground color and value
         var value = View.findDrawableById("value");
@@ -241,7 +198,7 @@ class DataFieldView extends Ui.DataField {
             else if (!mSensor.searching)
             {
                 var glucose_value = mSensor.data.glucoseValue;
-                mValue = glucose_value.format("%u"); // "%[flags][width][.precision]specifier" The supported specifiers are: d, i, u, o, x, X, f, e, E, g, G.
+                mValue = glucose_value.format("%u");
                 
                 mAlerting.doUpdate(glucose_value);
                 
@@ -256,13 +213,6 @@ class DataFieldView extends Ui.DataField {
             var arrow_x = dc.getWidth() - (32+5);
             var arrow_y = dc.getHeight()/2 - (32/2);
             dc.drawBitmap(arrow_x, arrow_y, mArrows[mArrowIndex]);
-            
-            
-            if (RECORDING == mRecordFitState)
-            {
-		        dc.setColor(Gfx.COLOR_RED, Gfx.COLOR_TRANSPARENT);
-				dc.drawText(dc.getWidth() - 10, 10, Gfx.FONT_XTINY, Rez.Strings.is_recording, Gfx.TEXT_JUSTIFY_RIGHT);
-            }
         }
         catch( ex instanceof UnexpectedTypeException ) {
             // Code to handle the throw of UnexpectedTypeException
