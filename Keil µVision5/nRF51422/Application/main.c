@@ -156,7 +156,7 @@
 #define FGM_ANTPUBLIC_RF_FREQ    60u     /**<*Provisory* ANT FGM RF Freq 2460 MHz */
 
 #define FGM_MFG_ID               255u    /**< Manufacturer ID. he value 255 (0x00FF) has been reserved as a development ID and may be used by manufacturers that have not yet been assigned a value. */
-#define FGM_SERIAL_NUMBER        0xABCDu /**< Serial Number. */
+#define FGM_SERIAL_NUMBER        0xFFFFu /**< Serial Number. */
 #define FGM_HW_VERSION           5u      /**< HW Version. */
 #define FGM_SW_VERSION           ANT_FGM_APP_VERSION   /**< SW Version. */
 #define FGM_MODEL_NUMBER         2u      /**< Model Number. */
@@ -923,11 +923,10 @@ int main(void)
     // Enter main loop.
     for (;;)
 		{
-
-
-			// - Sensor State in ANT: In Range, order Fehler z.B. ERecvLost 0x8E // When reception is lost without EOF received (or subcarrier was lost)
+			// Little TODO-List:
+			// - CR95HF schlafen legen
 			// - Fehler oder Error Rate? sozusagen ein Retry-Z�hler als Art Qualityidicator
-			// - Fehler/Erfolgsverh�ltnis?
+			// - Fehler/Erfolgsverhältnis?
 			// - Batteriestand
 			// - Sensorrestlaufzeit bzw. Fehler wenn abgelaufen
 
@@ -937,46 +936,50 @@ int main(void)
 			CR95HF_STATES nfc_state = getStateCR95HF();
 
 #if (ENABLE_ANT_FGM == 1)
-			// Neuer Status...
+			// New state...
 			m_ant_fgm.FGM_PROFILE_nfc_state = (uint8_t)nfc_state;
 #endif // ENABLE_ANT_FGM
 
 			if (nfc_state == CR95HF_STATE_UNKNOWN)
 			{
-				// Startsequenz mit Reset versuchen...
-				wakeCR95HF(CR95HF_DEFAULT_TIMEOUT_MS); // Wichtig, sonst ist �berhaupt keine Kommunikation m�glich
+				// try startup sequence with reset ...
+				wakeCR95HF(CR95HF_DEFAULT_TIMEOUT_MS); // otherwise no communication possible
 				//resetCR95HF(); // send a reset command just in case the cr95hf hasn't been powered off
-				//echoCR95HF(CR95HF_DEFAULT_TIMEOUT_MS, true); // Um in den Status ANSWERING zu wechseln ist die n�tig!
 
 				nrf_delay_ms(100);
 			}
 			else if (nfc_state == CR95HF_STATE_ANSWERING)
 			{
-				// NFC-Chip antwortet
+				// NFC chip is answering
 				protocolISO15693_CR95HF(CR95HF_PROTOCOL_ISO_15693_WAIT_FOR_SOF
 																| CR95HF_PROTOCOL_ISO_15693_10_MODULATION
 																| CR95HF_PROTOCOL_ISO_15693_CRC); // ISO 15693 settings --> 0x0D = Wait for SOF, 10% modulation, append CRC
 			}
 			else if ((nfc_state == CR95HF_STATE_PROTOCOL) || (nfc_state == CR95HF_STATE_TAG_IN_RANGE))
 			{
-				// Tags k�nnen jetzt gelesen werden... versuchen:
+				// Tags can be read now... let's try:
 				static CR95HF_TAG stKnownNfcTag;
 				CR95HF_TAG tFoundNfcTag;
 				bool fIsNewFoungTag = false;
 				if (inventoryISO15693_CR95HF(&tFoundNfcTag, CR95HF_DEFAULT_TIMEOUT_MS)) // sensor in range?
 				{
-					// Ja, Sensor gefunden!
+					// Yes, Sensor found!
 					if (0 != memcmp(stKnownNfcTag.uid, tFoundNfcTag.uid, sizeof(tFoundNfcTag.uid)))
 					{
+						// is new / changed
 						NRF_LOG_PRINTF("Neuer Sensor gefunden UID: %#02x:%#02x:%#02x:%#02x:%#02x:%#02x:%#02x:%#02x!\r\n",
 						               tFoundNfcTag.uid[0], tFoundNfcTag.uid[1], tFoundNfcTag.uid[2], tFoundNfcTag.uid[3], tFoundNfcTag.uid[4], tFoundNfcTag.uid[5], tFoundNfcTag.uid[6], tFoundNfcTag.uid[7]);
 						stKnownNfcTag = tFoundNfcTag;
 						fIsNewFoungTag = true;
 
+#if (ENABLE_ANT_FGM == 1)
+						// we use last two tag-uid bytes for our serial number
+						m_ant_fgm.FGM_PROFILE_serial_num = (tFoundNfcTag.uid[6] << 8) + tFoundNfcTag.uid[7];
+#endif // ENABLE_ANT_FGM
+						
 
 #if (ENABLE_BLE_SRV_HRS == 1)
-						// BLE HRS Service HRM aktualisieren:
-						// TOOD_CS:
+						// BLE HRS Service HRM update:
 						const uint16_t glucose_value = tFoundNfcTag.uid[7]; // Letzte Stelle vom Sensor nehmen
 						ble_hrs_update_heart_rate(glucose_value);
 #endif // NABLE_BLE_SRV_HRS
@@ -993,15 +996,15 @@ int main(void)
 						int len = readSingleCR95HF(adr, &au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE], LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE, CR95HF_DEFAULT_TIMEOUT_MS, CR95HF_READ_MAX_RETRY_CNT);
 						if (LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE != len)
 						{
-							// Fehler
-							NRF_LOG_DEBUG("Fehler beim Lesen!\r\n");
+							// Error
+							NRF_LOG_DEBUG("Error while reading sensor data!\r\n");
 							fReadAllOk = false;
 							break;
 						}
 
 						if (fIsNewFoungTag)
 						{
-							// Falls es ein neuer Sensor ist, dessen Daten ausgeben:
+							// DEBUG: print new Sensor data:
 							NRF_LOG_PRINTF("block %#04d: %#02x %#02x %#02x %#02x %#02x %#02x %#02x %#02x\r\n", adr,
 														 au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+0],
 														 au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+1],
@@ -1016,18 +1019,18 @@ int main(void)
 
 					if (fReadAllOk)
 					{
-						// Ok, alle Daten eingelesen
+						// Ok, all nfc tag data read
 						ST_LibreSensorData tSensorData;
 						if (LibreSensor_ParseSensorData(tFoundNfcTag.uid, &au8SensorRawData[0], sizeof(au8SensorRawData), &tSensorData))
 						{
-							// Parsen ok
+							// Parsing ok
 							if (fIsNewFoungTag)
 							{
 								NRF_LOG_PRINTF("sensor_id: '%s'\r\n", tSensorData.sensor_id);
 							}
 							
 #if (ENABLE_ANT_FGM == 1)
-							// Neue Messung...
+							// New measurement...
 							m_ant_fgm.FGM_PROFILE_meas_glucose = tSensorData.current_glucose;
 							m_ant_fgm.FGM_PROFILE_meas_time_offset++;
 							m_ant_fgm.FGM_PROFILE_meas_prediction = tSensorData.trend_prediction;
@@ -1059,9 +1062,13 @@ int main(void)
 
 
 			  NRF_LOG_DEBUG(".");
-        nrf_delay_ms(10000); // nur alle 10s auslesen!
-
-        power_manage();
+			
+				for (int i = 1; i < 30; i++)
+			  {
+					// TODO: real sleep
+          nrf_delay_ms(1000);
+          power_manage();
+				}
     }
 }
 
