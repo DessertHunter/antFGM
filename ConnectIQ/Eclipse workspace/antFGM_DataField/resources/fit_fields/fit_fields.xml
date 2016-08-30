@@ -1,0 +1,26 @@
+<fitContributions>
+    <!-- current_glucose, MESG_TYPE_RECORD -->
+    <fitField id="0" 
+              displayInChart="true" 
+              displayInActivityLaps="false" 
+              displayInActivitySummary="false" 
+              sortOrder="0" 
+              precision="0" 
+              chartTitle="@Strings.fit0_graph_label" 
+              dataLabel="@Strings.fit0_data_label" 
+              unitLabel="@Strings.fit0_units" 
+              fillColor="#FF0000" />
+
+    <!-- glucose_climbsink_rate, MESG_TYPE_RECORD -->
+    <fitField id="1" 
+              displayInChart="true" 
+              displayInActivityLaps="false" 
+              displayInActivitySummary="false" 
+              sortOrder="1" 
+              precision="0" 
+              chartTitle="@Strings.fit1_graph_label" 
+              dataLabel="@Strings.fit1_data_label" 
+              unitLabel="@Strings.fit1_units" 
+              fillColor="#AA0000" />
+
+</fitContributions>

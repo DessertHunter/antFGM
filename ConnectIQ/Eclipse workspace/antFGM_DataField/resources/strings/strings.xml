@@ -1,0 +1,21 @@
+<strings>
+    <string id="AppName">antFGM (DataField)</string>
+    
+    <string id="label">Glucose [mg/dL]</string>
+    
+    <string id="invalid_value">-1</string>
+    <string id="outdated_value">over 1h old!</string>
+    
+    <!-- FIT fields -->
+    <string id="fit0_data_label">Current Glucose</string>
+    <string id="fit0_graph_label">Current Glucose chart</string>
+    <string id="fit0_units">mg/dL</string>
+    <string id="fit1_data_label">Glucose rate of climb/sink</string>
+    <string id="fit1_graph_label">Glucose rate of climb/sink chart</string>
+    <string id="fit1_units">delta mg/dL</string>
+    
+    <!-- Settings -->
+    <string id="AppVersionTitle">Version</string>
+    <string id="EnableRecordingTitle">Enable recording to FIT-file</string>
+    <string id="ShowRecIndicatorTitle">Show record indicator</string>
+</strings>
