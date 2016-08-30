@@ -5,10 +5,14 @@
 
     <string id="invalid_value">-1</string>
     <string id="outdated_value">Veraltet!</string>
-	
-    <string id="fit0_data_label">Glukose</string>
+    
+    <!-- FIT fields -->
+    <string id="fit0_data_label">Aktuelle Glukose</string>
     <string id="fit0_graph_label">Glukoseverlauf</string>
     <string id="fit0_units">mg/dL</string>
+    <string id="fit1_data_label">Glukoseänderungsrate</string>
+    <string id="fit1_graph_label">Verlauf der Glukoseänderungsrate</string>
+    <string id="fit1_units">delta mg/dL</string>
     
     <!-- Settings -->
     <string id="AppVersionTitle">Version</string>

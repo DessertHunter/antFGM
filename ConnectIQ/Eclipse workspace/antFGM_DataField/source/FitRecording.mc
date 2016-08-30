@@ -10,10 +10,13 @@ using Toybox.FitContributor as Fit;
 //! Recording to FIT-File
 class FitRecording {
 
+	const SINT8_MIN = -128;
+	const SINT8_MAX = 127;
 	const UINT16_MAX = 0xFFFF;
 
     // FIT field IDs, type=Number; The unique Field Identifier for the Field
-    const GLUCOSE_FIT_FIELD_ID = 0; //type=Number; The unique Field Identifier for the Field
+    const CURRENT_GLUCOSE_FIT_FIELD_ID = 0;
+    const GLUCOSE_CLIMBSINK_RATE_FIT_FIELD_ID = 1;
 
     // @see: http://developer.garmin.com/index.php/blog/post/connect-iq-2-the-full-circle
     hidden var mEnableFitRecording = true;
@@ -24,7 +27,8 @@ class FitRecording {
     hidden var mTimerRunning = false; // Boolean
 
     // FIT Contributions variables (class Toybox::FitContributor::Field)
-    hidden var mGlucoseFitField;
+    hidden var mCurrentGlucoseFitField;
+    hidden var mGlucoseClimbSinkRateFitField;
 
     //! Constructor
     function initialize(dataField) {
@@ -53,16 +57,27 @@ class FitRecording {
             //    FitContributor.MESG_TYPE_LAP for lap information
             //    FitContributor.MESG_TYPE_SESSION` for summary information.
             // Units provides a file internal units field.
-            mGlucoseFitField = dataField.createField("current_glucose", GLUCOSE_FIT_FIELD_ID, Fit.DATA_TYPE_UINT16, {
+            mCurrentGlucoseFitField = dataField.createField("current_glucose", CURRENT_GLUCOSE_FIT_FIELD_ID, Fit.DATA_TYPE_UINT16, {
                 :count => 1, // The number of elements to add to the field if it is an array (Default 1)
                 :mesgType => Fit.MESG_TYPE_RECORD, // The message type that this field should be added to. Defaults to MESG_TYPE_RECORD if not provided.
                 :units => Ui.loadResource(Rez.Strings.fit0_units) // The display units as a String. This should use the current device language.
                 });
-            mGlucoseFitField.setData(0); // Default-Wert
+            mCurrentGlucoseFitField.setData(0); // Default-Wert
+            
+            mGlucoseClimbSinkRateFitField = dataField.createField("glucose_climbsink_rate", GLUCOSE_CLIMBSINK_RATE_FIT_FIELD_ID, Fit.DATA_TYPE_SINT8, {
+                :count => 1, // The number of elements to add to the field if it is an array (Default 1)
+                :mesgType => Fit.MESG_TYPE_RECORD, // The message type that this field should be added to. Defaults to MESG_TYPE_RECORD if not provided.
+                :units => Ui.loadResource(Rez.Strings.fit1_units) // The display units as a String. This should use the current device language.
+                });
+            mGlucoseClimbSinkRateFitField.setData(0); // Default-Wert 
+            
         }
         else
         {
-            mGlucoseFitField = null;
+            mCurrentGlucoseFitField = null;
+            mGlucoseClimbSinkRateFitField = null;
+            Sys.println("Could not create FIT fields! Disable recording!");
+            mEnableFitRecording = false;
         }
     }
 
@@ -70,7 +85,10 @@ class FitRecording {
 
         if (mEnableFitRecording && (sensor instanceof ANT_FGM_Sensor)) {
 			var glucose_value = toUINT16(sensor.data.glucoseValue);
-            mGlucoseFitField.setData(glucose_value);
+            mCurrentGlucoseFitField.setData(glucose_value);
+
+			var glucose_climbsink_rate = toSINT8(sensor.data.glucoseClimbSinkRate);
+            mGlucoseClimbSinkRateFitField.setData(glucose_climbsink_rate);
 
             if( mTimerRunning ) {
                 // Update lap/session data and record counts
@@ -80,6 +98,26 @@ class FitRecording {
         }
     }
 
+    hidden function toSINT8(value) {
+
+        if (value instanceof Toybox.Lang.Number)
+        {
+            if (value < SINT8_MIN) {
+	            return SINT8_MIN; // limit to min
+            else if (value < SINT8_MAX) {
+	            return SINT8_MAX; // limit to max
+	        } else {
+	            return value;
+	        }
+        }
+        else
+        {
+            Sys.print("RecordFitData ERROR, value is no Number! value was "); Sys.println(value);
+            mEnableFitRecording = false;
+            return 0;
+        }
+    }
+    
     hidden function toUINT16(value) {
 
         if (value instanceof Toybox.Lang.Number)

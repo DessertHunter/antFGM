@@ -5,7 +5,8 @@
 	<layout id="main_layout">
 	    <!-- TODO: <drawable class="Background" />-->
 	    <label id="label" x="center" y="5" text="@Strings.label" color="Gfx.COLOR_LT_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
-	    <label id="value" x="85" y="50" text="@Strings.invalid_value" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_NUMBER_THAI_HOT" />
+	    <label id="value" x="90" y="50" text="@Strings.invalid_value" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_RIGHT" font="Gfx.FONT_NUMBER_THAI_HOT" />
+	    <label id="climbsink_rate" x="95" y="70" text="@Strings.invalid_value" color="Gfx.COLOR_PINK" justification="Gfx.TEXT_JUSTIFY_LEFT" font="Gfx.FONT_MEDIUM" />
         <drawable id="trend" class="TrendDrawable">
         	<param name="color">Gfx.COLOR_DK_GRAY</param>
         	<param name="x">180</param>

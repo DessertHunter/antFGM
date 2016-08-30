@@ -54,10 +54,10 @@ class WidgetInfoView extends Ui.View {
                 }
                 else // !mSensor.searching
                 {
-                    View.findDrawableById("line1").setText(mSensor.data.serialNumber);
-                    View.findDrawableById("line2").setText(mSensor.data.hardwareVersion);
-                    View.findDrawableById("line3").setText(mSensor.data.softwareVersion);
-                    View.findDrawableById("line4").setText(Rez.Strings.status_default);
+                    View.findDrawableById("line1").setText("#" + mSensor.data.serialNumber.format("%4X"));
+                    View.findDrawableById("line2").setText(mSensor.data.hardwareVersion.format("%u"));
+                    View.findDrawableById("line3").setText(mSensor.data.softwareVersion.format("%u"));
+                    View.findDrawableById("line4").setText(mSensor.data.manufacturerID.format("%u"));
                 }   
             } // mSensor != null
   

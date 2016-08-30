@@ -49,25 +49,25 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
         }
 
         // Page 0
-        hidden var pastSequenceNumber; // um neue Daten zu erkennen
-        var sequenceNumber; // uint8_t
-        var glucoseValue; // uint16_t
-        var glucosePrediction; // uint8_t
-        var glucoseClimbSinkRate; // int8_t
-        var timeOffset; // uint16_t
+        hidden var pastSequenceNumber; // to detect new values
+        var sequenceNumber;        // class Number / uint8_t
+        var glucoseValue;          // class Number / uint16_t
+        var glucosePrediction;     // class Number / uint8_t
+        var glucoseClimbSinkRate;  // class Number / int8_t
+        var timeOffset;            // class Number / uint16_t
         var momentLastMeasurement; // class Moment
 
         // Page 1
         var nfcState; // uint8_t
 
         // Page 2:
-        var manufacturerID; // Manufacturer ID
-        var serialNumber; // uint16_t Serial Number
+        var manufacturerID; // class Number / uint8_t      Manufacturer ID
+        var serialNumber;   // class Number / uint16_t     Serial Number
 
         // Page 3:
-        var hardwareVersion; // Hardware version
-        var softwareVersion; // Software version
-        var modelNumber;  // Model number
+        var hardwareVersion; // class Number / uint8_t      Hardware version
+        var softwareVersion; // class Number / uint8_t      Software version
+        var modelNumber;     // class Number / uint8_t      Model number
 
         function initialize()
         {
@@ -156,9 +156,6 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
             // [4-6] reserved[3]
             //   [7] nfc_state
             data.nfcState = payload[7];
-
-            // TODO: DEBUG
-            Sys.print("New nfcState="); Sys.println(data.nfcState);
         }
 
     } // end class

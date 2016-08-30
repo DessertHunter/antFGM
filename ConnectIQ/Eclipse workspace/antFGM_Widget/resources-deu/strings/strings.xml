@@ -21,7 +21,7 @@
     <string id="info1">Seriennummer</string>
     <string id="info2">Hardware Version</string>
     <string id="info3">Software Version</string>
-    <string id="info4">Model Nummer</string>
+    <string id="info4">Herstellerkennung</string>
     
     <!-- Settings -->
     <string id="AppVersionTitle">Version</string>

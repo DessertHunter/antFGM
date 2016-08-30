@@ -133,11 +133,14 @@ class WidgetMainView extends Ui.View {
                     }
 
                     var glucose_value = mSensor.data.glucoseValue;
-                    View.findDrawableById("value").setText(glucose_value.format("%u")); // "%[flags][width][.precision]specifier" The supported specifiers are: d, i, u, o, x, X, f, e, E, g, G.
+                    View.findDrawableById("value").setText(glucose_value.format("%u"));
 
+					var glucose_climbsink_rate = mSensor.data.glucoseClimbSinkRate;
+					View.findDrawableById("climbsink_rate").setText(glucose_climbsink_rate.format("%+d"));
+					
                     mAlerting.doUpdate(glucose_value);
 
-                    mArrowIndex =  mSensor.data.glucosePrediction;
+                    mArrowIndex = mSensor.data.glucosePrediction;
 
                     mTrend.setArrow(mArrowIndex);
                     // TODO: Farben:

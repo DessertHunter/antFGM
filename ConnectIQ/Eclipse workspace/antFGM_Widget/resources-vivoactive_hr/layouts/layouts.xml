@@ -1,10 +1,10 @@
 ﻿<layouts>
     <!-- A centered layout for vívoactive HR with 148x205px. -->
 	<layout id="main_layout">
-	    <!-- TODO: <drawable class="Background" />-->
 	    <label id="label" x="center" y="4" text="@Strings.label" color="Gfx.COLOR_DK_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_XTINY" />
-	    <label id="value" x="center" y="20"  text="@Strings.invalid_value" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_NUMBER_THAI_HOT" />
-	    <label id="measurement_age" x="center" y="84" text="@Strings.outdated_value" color="Gfx.COLOR_LT_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
+	    <label id="value" x="98" y="20" text="@Strings.invalid_value" color="Gfx.COLOR_WHITE" justification="Gfx.TEXT_JUSTIFY_RIGHT" font="Gfx.FONT_NUMBER_THAI_HOT" />
+	    <label id="climbsink_rate" x="103" y="61" text="@Strings.invalid_value" color="Gfx.COLOR_PINK" justification="Gfx.TEXT_JUSTIFY_LEFT" font="Gfx.FONT_MEDIUM" />
+	    <label id="measurement_age" x="center" y="85" text="@Strings.outdated_value" color="Gfx.COLOR_LT_GRAY" justification="Gfx.TEXT_JUSTIFY_CENTER" font="Gfx.FONT_TINY" />
         <drawable id="trend" class="TrendDrawable">
         	<param name="color">Gfx.COLOR_DK_GRAY</param>
         	<param name="x">74</param>
