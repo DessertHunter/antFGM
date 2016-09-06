@@ -77,7 +77,7 @@ CR95HF_STATES getStateCR95HF(void);
 
 
 // TODO:
-uint8_t getErrorRate(void); // 100% success vs. error �ber die letzten x Anfragen??? Doppel FIFO notwendig 
+uint8_t getErrorRate(void); // 100% success vs. error ueber die letzten x Anfragen??? Doppel FIFO notwendig 
 
 
 bool initCR95HF(void);

@@ -15,7 +15,7 @@
 
 #define ENABLE_BLE_SRV_HRS  0 ///< BLE Heart Rate Service
 #define ENABLE_BLE_SRV_GLS  0 ///< BLE Glucose Service
-#define ENABLE_BLE_SRV_BAS  0	///< BLE Battery Service
+#define ENABLE_BLE_SRV_BAS  0  ///< BLE Battery Service
 
 /** @file
  *
@@ -89,6 +89,8 @@
 
 
 #define CR95HF_IS_ATTACHED              1
+#define CR95HF_SLEEP_ENABLED            1
+
 
 #if (CR95HF_IS_ATTACHED == 1)
 #include "CR95HF.h"
@@ -100,7 +102,7 @@
 #include "LibreSensor.h"
 
 
-#define ANT_FGM_APP_VERSION             100  /**< Application Version (Major=VERSION / 100; Minor=VERSION % 100) */
+#define ANT_FGM_APP_VERSION             101  /**< Application Version (Major=VERSION / 100; Minor=VERSION % 100) */
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
@@ -111,7 +113,7 @@
 #endif // ENABLE_ANT_FGM
 
 
-#define WAKEUP_BUTTON_ID               	0                                            /**< Button used to wake up the application. */
+#define WAKEUP_BUTTON_ID                 0                                            /**< Button used to wake up the application. */
 #define BOND_DELETE_ALL_BUTTON_ID       1                                            /**< Button used for deleting all bonded centrals during startup. */
 
 
@@ -253,7 +255,7 @@ void ant_fgm_evt_handler(ant_fgm_profile_t * p_profile, ant_fgm_evt_t event)
         case ANT_FGM_PAGE_3_UPDATED:
             /* fall through */
         case ANT_FGM_PAGE_4_UPDATED:
-					// TODO: ant_fgm_simulator_one_iteration(&m_ant_fgm_simulator);
+          // TODO: ant_fgm_simulator_one_iteration(&m_ant_fgm_simulator);
             break;
 
         default:
@@ -266,9 +268,9 @@ void ant_fgm_evt_handler(ant_fgm_profile_t * p_profile, ant_fgm_evt_t event)
 */
 static void ant_and_ble_adv_start(void)
 {
-    ble_advertising_start();
+  ble_advertising_start();
 
-	// TODO: Hier Channel �ffnen
+  // TODO: Hier Channel oeffnen
 }
 
 
@@ -365,14 +367,14 @@ static void ble_services_init(void)
 #if (ENABLE_BLE_SRV_HRS == 1)
     ble_hrs_init_t hrs_init;
     uint8_t        body_sensor_location;
-	#endif // NABLE_BLE_SRV_HRS
+#endif // NABLE_BLE_SRV_HRS
 
 #if (ENABLE_BLE_SRV_GLS == 1)
     ble_gls_init_t gls_init;
 #endif // NABLE_BLE_SRV_GLS
 
 #if (ENABLE_BLE_SRV_BAS == 1)
-		ble_bas_init_t bas_init;
+    ble_bas_init_t bas_init;
 #endif // NABLE_BLE_SRV_BAS
 
     ble_dis_init_t dis_init;
@@ -543,7 +545,7 @@ static void ble_gls_conn_params_init(void)
 void ant_evt_dispatch(ant_evt_t * p_ant_evt)
 {
 #if (ENABLE_ANT_FGM == 1)
-		ant_fgm_sens_evt_handler(&m_ant_fgm, p_ant_evt);
+    ant_fgm_sens_evt_handler(&m_ant_fgm, p_ant_evt);
 #endif // ENABLE_ANT_FGM
     ant_state_indicator_evt_handler(p_ant_evt);
 }
@@ -557,10 +559,10 @@ static void softdevice_setup(void)
 {
     uint32_t err_code;
 
-	  // TODO: Bereits gemacht! err_code = softdevice_ant_evt_handler_set(ant_evt_dispatch);
+    // TODO: Bereits gemacht! err_code = softdevice_ant_evt_handler_set(ant_evt_dispatch);
     // TODO: Bereits gemacht!     APP_ERROR_CHECK(err_code);
 
-	  // TODO: err_code = softdevice_handler_init(NRF_CLOCK_LFCLKSRC, NULL, 0, NULL);
+    // TODO: err_code = softdevice_handler_init(NRF_CLOCK_LFCLKSRC, NULL, 0, NULL);
     // TODO: APP_ERROR_CHECK(err_code);
 
     err_code = ant_stack_static_config(); // set ant resource
@@ -576,23 +578,23 @@ static void ble_hrs_update_heart_rate(const uint16_t computed_heart_rate)
 {
    uint32_t err_code;
 
-	// TODO: R-R interval
-	// TODO: ble_hrs_rr_interval_add(&m_hrs, beat_time - prev_beat);
+  // TODO: R-R interval
+  // TODO: ble_hrs_rr_interval_add(&m_hrs, beat_time - prev_beat);
 
-	// Notify the received heart rate measurement
-	err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, computed_heart_rate);
-	if (
-			(err_code != NRF_SUCCESS)
-			&&
-			(err_code != NRF_ERROR_INVALID_STATE)
-			&&
-			(err_code != BLE_ERROR_NO_TX_BUFFERS)
-			&&
-			(err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-	)
-	{
-			APP_ERROR_HANDLER(err_code);
-	}
+  // Notify the received heart rate measurement
+  err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, computed_heart_rate);
+  if (
+      (err_code != NRF_SUCCESS)
+      &&
+      (err_code != NRF_ERROR_INVALID_STATE)
+      &&
+      (err_code != BLE_ERROR_NO_TX_BUFFERS)
+      &&
+      (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+  )
+  {
+      APP_ERROR_HANDLER(err_code);
+  }
 }
 #endif // NABLE_BLE_SRV_HRS
 
@@ -618,8 +620,8 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             APP_ERROR_CHECK(err_code);
 
             // Need to close the ANT channel to make it safe to write bonding information to flash
-				// TODO: err_code = sd_ant_channel_close(ANT_HRMRX_ANT_CHANNEL);
-				// TODO: APP_ERROR_CHECK(err_code);
+        // TODO: err_code = sd_ant_channel_close(ANT_HRMRX_ANT_CHANNEL);
+        // TODO: APP_ERROR_CHECK(err_code);
 
             // Note: Bonding information will be stored, advertising will be restarted and the
             //       ANT channel will be reopened when ANT event CHANNEL_CLOSED is received.
@@ -644,13 +646,13 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
                 // APP_ERROR_CHECK(err_code);
 
                 // Go to system-off mode (this function will not return; wakeup will cause a reset)
-							NRF_LOG_PRINTF("WARNING: BLE_GAP_EVT_TIMEOUT!\r\n");
-							  // TOOD_CS: NEIN WOLLEN WIR NICHT! err_code = sd_power_system_off();
+              NRF_LOG_PRINTF("WARNING: BLE_GAP_EVT_TIMEOUT!\r\n");
+                // TOOD_CS: NEIN WOLLEN WIR NICHT! err_code = sd_power_system_off();
                 // TOOD_CS: NEIN WOLLEN WIR NICHT!  APP_ERROR_CHECK(err_code);
             }
             break;
 
-#ifndef	BONDING_ENABLE
+#ifndef BONDING_ENABLE
             case BLE_GATTS_EVT_SYS_ATTR_MISSING:
                 err_code = sd_ble_gatts_sys_attr_set(m_conn_handle,
                                                      NULL,
@@ -682,7 +684,7 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 
 #if (ENABLE_BLE_SRV_HRS == 1)
     ble_hrs_on_ble_evt(&m_hrs, p_ble_evt);
-	ble_hrs_conn_params_on_ble_evt(p_ble_evt);
+    ble_hrs_conn_params_on_ble_evt(p_ble_evt);
 #endif // NABLE_BLE_SRV_HRS
 
 #if (ENABLE_BLE_SRV_GLS == 1)
@@ -798,8 +800,8 @@ static void ble_ant_stack_init(void)
     APP_ERROR_CHECK(err_code);
 
     // Subscribe for ANT events.
-		err_code = softdevice_ant_evt_handler_set(ant_evt_dispatch);
-		APP_ERROR_CHECK(err_code);
+    err_code = softdevice_ant_evt_handler_set(ant_evt_dispatch);
+    APP_ERROR_CHECK(err_code);
 
 #ifdef BONDING_ENABLE
     // Register with the SoftDevice handler module for BLE events.
@@ -818,27 +820,27 @@ static void ble_ant_stack_init(void)
  */
 static void profile_setup(void)
 {
-	uint32_t err_code;
+  uint32_t err_code;
 
 #if (ENABLE_ANT_FGM == 1)
 /** @snippet [ANT FGM Profile Setup] */
-	err_code = ant_fgm_sens_init(&m_ant_fgm,
-															 FGM_SENS_CHANNEL_CONFIG(m_ant_fgm),
-															 FGM_SENS_PROFILE_CONFIG(m_ant_fgm));
-	APP_ERROR_CHECK(err_code);
+  err_code = ant_fgm_sens_init(&m_ant_fgm,
+                               FGM_SENS_CHANNEL_CONFIG(m_ant_fgm),
+                               FGM_SENS_PROFILE_CONFIG(m_ant_fgm));
+  APP_ERROR_CHECK(err_code);
 
-	m_ant_fgm.FGM_PROFILE_manuf_id   = FGM_MFG_ID;
-	m_ant_fgm.FGM_PROFILE_serial_num = FGM_SERIAL_NUMBER;
-	m_ant_fgm.FGM_PROFILE_hw_version = FGM_HW_VERSION;
-	m_ant_fgm.FGM_PROFILE_sw_version = FGM_SW_VERSION;
-	m_ant_fgm.FGM_PROFILE_model_num  = FGM_MODEL_NUMBER;
+  m_ant_fgm.FGM_PROFILE_manuf_id   = FGM_MFG_ID;
+  m_ant_fgm.FGM_PROFILE_serial_num = FGM_SERIAL_NUMBER;
+  m_ant_fgm.FGM_PROFILE_hw_version = FGM_HW_VERSION;
+  m_ant_fgm.FGM_PROFILE_sw_version = FGM_SW_VERSION;
+  m_ant_fgm.FGM_PROFILE_model_num  = FGM_MODEL_NUMBER;
 
-	err_code = ant_fgm_sens_open(&m_ant_fgm);
-	APP_ERROR_CHECK(err_code);
+  err_code = ant_fgm_sens_open(&m_ant_fgm);
+  APP_ERROR_CHECK(err_code);
 
-	err_code = ant_state_indicator_channel_opened();
-	APP_ERROR_CHECK(err_code);
-	NRF_LOG_PRINTF("ANT FGM Channel is now open (%X)\r\n", err_code);
+  err_code = ant_state_indicator_channel_opened();
+  APP_ERROR_CHECK(err_code);
+  NRF_LOG_PRINTF("ANT FGM Channel is now open (%X)\r\n", err_code);
 /** @snippet [ANT FGM Profile Setup] */
 #endif // ENABLE_ANT_FGM
 }
@@ -861,6 +863,11 @@ static void power_manage(void)
 int main(void)
 {
     uint32_t err_code;
+
+    NRF_LOG_DEBUG("\r\n***************************\r\n");
+    NRF_LOG_DEBUG(DEVICE_NAME);
+    NRF_LOG_DEBUG("\r\n***************************\r\n");
+
     // Initialize peripherals
     timers_init();
 
@@ -910,165 +917,183 @@ int main(void)
     }
 
 #if (CR95HF_IS_ATTACHED == 1)
-	NRF_LOG_PRINTF("Init CR95HF!");
-	UNUSED_VARIABLE(bsp_indication_set(CR95HF_BSP_USER_STATE));
-	initCR95HF();
-	wakeCR95HF(CR95HF_DEFAULT_TIMEOUT_MS); // Wichtig, sonst ist �berhaupt keine Kommunikation m�glich
-	CR95HF_IDN tChipIdentify;
-	identifyCR95HF(&tChipIdentify, CR95HF_DEFAULT_TIMEOUT_MS);
-	NRF_LOG_PRINTF("CR95HF Identifikation '%s' (CRC=%X)\r\n", tChipIdentify.deviceID, tChipIdentify.romCRC);
-	UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_OFF));
+  NRF_LOG_PRINTF("Init CR95HF!\r\n");
+  UNUSED_VARIABLE(bsp_indication_set(CR95HF_BSP_USER_STATE));
+  initCR95HF();
+  wakeCR95HF(CR95HF_DEFAULT_TIMEOUT_MS); // wakeup if sleeping
+  {
+    CR95HF_IDN tChipIdentify;
+    identifyCR95HF(&tChipIdentify, CR95HF_DEFAULT_TIMEOUT_MS);
+    NRF_LOG_PRINTF("CR95HF identification '%s' (CRC=%X)\r\n", tChipIdentify.deviceID, tChipIdentify.romCRC);
+  }
+  UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_OFF));
+#if (CR95HF_SLEEP_ENABLED == 1)
+  NRF_LOG_PRINTF("CR95HF will sleep/hybernate\r\n");
+#else
+  NRF_LOG_PRINTF("CR95HF hypernate DEACTIVATED!\r\n");
+#endif // CR95HF_SLEEP_ENABLED
 #endif // CR95HF_IS_ATTACHED
 
     // Enter main loop.
     for (;;)
-		{
-			// Little TODO-List:
-			// - CR95HF schlafen legen
-			// - Fehler oder Error Rate? sozusagen ein Retry-Z�hler als Art Qualityidicator
-			// - Fehler/Erfolgsverhältnis?
-			// - Batteriestand
-			// - Sensorrestlaufzeit bzw. Fehler wenn abgelaufen
+    {
+      // Little TODO-List:
+      // - CR95HF schlafen legen
+      // - Fehler oder Error Rate? sozusagen ein Retry-Z�hler als Art Qualityidicator
+      // - Fehler/Erfolgsverhältnis?
+      // - Batteriestand
+      // - Sensorrestlaufzeit bzw. Fehler wenn abgelaufen
 
 #if (CR95HF_IS_ATTACHED == 1)
-			UNUSED_VARIABLE(bsp_indication_set(CR95HF_BSP_USER_STATE));
+      UNUSED_VARIABLE(bsp_indication_set(CR95HF_BSP_USER_STATE));
 
-			CR95HF_STATES nfc_state = getStateCR95HF();
-
-#if (ENABLE_ANT_FGM == 1)
-			// New state...
-			m_ant_fgm.FGM_PROFILE_nfc_state = (uint8_t)nfc_state;
-#endif // ENABLE_ANT_FGM
-
-			if (nfc_state == CR95HF_STATE_UNKNOWN)
-			{
-				// try startup sequence with reset ...
-				wakeCR95HF(CR95HF_DEFAULT_TIMEOUT_MS); // otherwise no communication possible
-				//resetCR95HF(); // send a reset command just in case the cr95hf hasn't been powered off
-
-				nrf_delay_ms(100);
-			}
-			else if (nfc_state == CR95HF_STATE_ANSWERING)
-			{
-				// NFC chip is answering
-				protocolISO15693_CR95HF(CR95HF_PROTOCOL_ISO_15693_WAIT_FOR_SOF
-																| CR95HF_PROTOCOL_ISO_15693_10_MODULATION
-																| CR95HF_PROTOCOL_ISO_15693_CRC); // ISO 15693 settings --> 0x0D = Wait for SOF, 10% modulation, append CRC
-			}
-			else if ((nfc_state == CR95HF_STATE_PROTOCOL) || (nfc_state == CR95HF_STATE_TAG_IN_RANGE))
-			{
-				// Tags can be read now... let's try:
-				static CR95HF_TAG stKnownNfcTag;
-				CR95HF_TAG tFoundNfcTag;
-				bool fIsNewFoungTag = false;
-				if (inventoryISO15693_CR95HF(&tFoundNfcTag, CR95HF_DEFAULT_TIMEOUT_MS)) // sensor in range?
-				{
-					// Yes, Sensor found!
-					if (0 != memcmp(stKnownNfcTag.uid, tFoundNfcTag.uid, sizeof(tFoundNfcTag.uid)))
-					{
-						// is new / changed
-						NRF_LOG_PRINTF("Neuer Sensor gefunden UID: %#02x:%#02x:%#02x:%#02x:%#02x:%#02x:%#02x:%#02x!\r\n",
-						               tFoundNfcTag.uid[0], tFoundNfcTag.uid[1], tFoundNfcTag.uid[2], tFoundNfcTag.uid[3], tFoundNfcTag.uid[4], tFoundNfcTag.uid[5], tFoundNfcTag.uid[6], tFoundNfcTag.uid[7]);
-						stKnownNfcTag = tFoundNfcTag;
-						fIsNewFoungTag = true;
+      CR95HF_STATES nfc_state = getStateCR95HF();
 
 #if (ENABLE_ANT_FGM == 1)
-						// we use last two tag-uid bytes for our serial number
-						m_ant_fgm.FGM_PROFILE_serial_num = (tFoundNfcTag.uid[6] << 8) + tFoundNfcTag.uid[7];
+      // New state...
+      m_ant_fgm.FGM_PROFILE_nfc_state = (uint8_t)nfc_state;
 #endif // ENABLE_ANT_FGM
-						
+
+      if (nfc_state == CR95HF_STATE_UNKNOWN)
+      {
+        // try startup sequence with reset ...
+        resetCR95HF(); // send a reset command just in case the CR95HF hasn't been powered off
+
+        nrf_delay_ms(100);
+      }
+      else if (nfc_state == CR95HF_STATE_SLEEPING)
+      {
+        // wake up CR95HF
+        NRF_LOG_PRINTF("CR95HF wake up...\r\n");
+        if (!wakeCR95HF(CR95HF_DEFAULT_TIMEOUT_MS)) // otherwise no communication possible
+        {
+          NRF_LOG_PRINTF("CR95HF state was SLEEPING, but wakeup failed!\r\n");
+        }
+      }
+      else if (nfc_state == CR95HF_STATE_ANSWERING)
+      {
+        // NFC chip is answering
+        // now set to protocol mode
+        protocolISO15693_CR95HF(CR95HF_PROTOCOL_ISO_15693_WAIT_FOR_SOF
+                                | CR95HF_PROTOCOL_ISO_15693_10_MODULATION
+                                | CR95HF_PROTOCOL_ISO_15693_CRC); // ISO 15693 settings --> 0x0D = Wait for SOF, 10% modulation, append CRC
+      }
+      else if ((nfc_state == CR95HF_STATE_PROTOCOL) || (nfc_state == CR95HF_STATE_TAG_IN_RANGE))
+      {
+        // Tags can be read now... let's try:
+        static CR95HF_TAG stKnownNfcTag;
+        CR95HF_TAG tFoundNfcTag;
+        bool fIsNewFoungTag = false;
+        if (inventoryISO15693_CR95HF(&tFoundNfcTag, CR95HF_DEFAULT_TIMEOUT_MS)) // sensor in range?
+        {
+          // Yes, Sensor found!
+          if (0 != memcmp(stKnownNfcTag.uid, tFoundNfcTag.uid, sizeof(tFoundNfcTag.uid)))
+          {
+            // is new / changed
+            NRF_LOG_PRINTF("new sensor found: UID=%#02x:%#02x:%#02x:%#02x:%#02x:%#02x:%#02x:%#02x!\r\n",
+                           tFoundNfcTag.uid[0], tFoundNfcTag.uid[1], tFoundNfcTag.uid[2], tFoundNfcTag.uid[3], tFoundNfcTag.uid[4], tFoundNfcTag.uid[5], tFoundNfcTag.uid[6], tFoundNfcTag.uid[7]);
+            stKnownNfcTag = tFoundNfcTag;
+            fIsNewFoungTag = true;
+
+#if (ENABLE_ANT_FGM == 1)
+            // we use last two tag-uid bytes for our serial number
+            m_ant_fgm.FGM_PROFILE_serial_num = (tFoundNfcTag.uid[6] << 8) + tFoundNfcTag.uid[7];
+#endif // ENABLE_ANT_FGM
+
 
 #if (ENABLE_BLE_SRV_HRS == 1)
-						// BLE HRS Service HRM update:
-						const uint16_t glucose_value = tFoundNfcTag.uid[7]; // Letzte Stelle vom Sensor nehmen
-						ble_hrs_update_heart_rate(glucose_value);
+            // BLE HRS Service HRM update:
+            const uint16_t glucose_value = tFoundNfcTag.uid[7]; // Letzte Stelle vom Sensor nehmen
+            ble_hrs_update_heart_rate(glucose_value);
 #endif // NABLE_BLE_SRV_HRS
 
 #if (ENABLE_BLE_SRV_GLS == 1)
-
+            // TODO
 #endif // NABLE_BLE_SRV_GLS
-					}
+          }
 
-					bool fReadAllOk = true;
-					uint8_t au8SensorRawData[LIBRE_SENSOR_RAW_DATA_LENGTH];
-					for (uint8_t adr = LIBRE_SENSOR_RAW_DATA_START_BLOCK; adr <= LIBRE_SENSOR_RAW_DATA_END_BLOCK; adr++)
-					{
-						int len = readSingleCR95HF(adr, &au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE], LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE, CR95HF_DEFAULT_TIMEOUT_MS, CR95HF_READ_MAX_RETRY_CNT);
-						if (LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE != len)
-						{
-							// Error
-							NRF_LOG_DEBUG("Error while reading sensor data!\r\n");
-							fReadAllOk = false;
-							break;
-						}
+          bool fReadAllOk = true;
+          uint8_t au8SensorRawData[LIBRE_SENSOR_RAW_DATA_LENGTH];
+          for (uint8_t adr = LIBRE_SENSOR_RAW_DATA_START_BLOCK; adr <= LIBRE_SENSOR_RAW_DATA_END_BLOCK; adr++)
+          {
+            int len = readSingleCR95HF(adr, &au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE], LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE, CR95HF_DEFAULT_TIMEOUT_MS, CR95HF_READ_MAX_RETRY_CNT);
+            if (LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE != len)
+            {
+              // Error
+              NRF_LOG_DEBUG("Error while reading sensor data!\r\n");
+              fReadAllOk = false;
+              break;
+            }
 
-						if (fIsNewFoungTag)
-						{
-							// DEBUG: print new Sensor data:
-							NRF_LOG_PRINTF("block %#04d: %#02x %#02x %#02x %#02x %#02x %#02x %#02x %#02x\r\n", adr,
-														 au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+0],
-														 au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+1],
-														 au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+2],
-														 au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+3],
-														 au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+4],
-														 au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+5],
-														 au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+6],
-														 au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+7]);
-						}
-					}
+            if (fIsNewFoungTag)
+            {
+              // DEBUG: print new Sensor data:
+              NRF_LOG_PRINTF("block %#04d: %#02x %#02x %#02x %#02x %#02x %#02x %#02x %#02x\r\n", adr,
+                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+0],
+                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+1],
+                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+2],
+                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+3],
+                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+4],
+                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+5],
+                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+6],
+                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+7]);
+            }
+          }
 
-					if (fReadAllOk)
-					{
-						// Ok, all nfc tag data read
-						ST_LibreSensorData tSensorData;
-						if (LibreSensor_ParseSensorData(tFoundNfcTag.uid, &au8SensorRawData[0], sizeof(au8SensorRawData), &tSensorData))
-						{
-							// Parsing ok
-							if (fIsNewFoungTag)
-							{
-								NRF_LOG_PRINTF("sensor_id: '%s'\r\n", tSensorData.sensor_id);
-							}
-							
+          if (fReadAllOk)
+          {
+            // Ok, all nfc tag data read
+            ST_LibreSensorData tSensorData;
+            if (LibreSensor_ParseSensorData(tFoundNfcTag.uid, &au8SensorRawData[0], sizeof(au8SensorRawData), &tSensorData))
+            {
+              // Parsing ok
+              if (fIsNewFoungTag)
+              {
+                NRF_LOG_PRINTF("sensor_id: '%s'\r\n", tSensorData.sensor_id);
+              }
+
+#if (CR95HF_SLEEP_ENABLED == 1)
+              NRF_LOG_PRINTF("CR95HF will hybernate, gn8...\r\n");
+              if (!hybernateCR95HF())
+              {
+                NRF_LOG_PRINTF("CR95HF hybernate failed!\r\n");
+              }
+#endif // CR95HF_SLEEP_ENABLED
+
 #if (ENABLE_ANT_FGM == 1)
-							// New measurement...
-							m_ant_fgm.FGM_PROFILE_meas_glucose = tSensorData.current_glucose;
-							m_ant_fgm.FGM_PROFILE_meas_time_offset++;
-							m_ant_fgm.FGM_PROFILE_meas_prediction = tSensorData.trend_prediction;
-							m_ant_fgm.FGM_PROFILE_meas_climb_sink_rate = tSensorData.glucose_climb_sink_rate;
-							m_ant_fgm.FGM_PROFILE_meas_sequence_num++;
+              // New measurement...
+              m_ant_fgm.FGM_PROFILE_meas_glucose = tSensorData.current_glucose;
+              m_ant_fgm.FGM_PROFILE_meas_time_offset++;
+              m_ant_fgm.FGM_PROFILE_meas_prediction = tSensorData.trend_prediction;
+              m_ant_fgm.FGM_PROFILE_meas_climb_sink_rate = tSensorData.glucose_climb_sink_rate;
+              m_ant_fgm.FGM_PROFILE_meas_sequence_num++;
 #endif // ENABLE_ANT_FGM
-						}
-					}
+            }
+          }
 
-				}
-				//if (getStateCR95HF() == CR95HF_STATE_ANSWERING)
-				//{
-					// TODO: goToSleep (0b100001, sleepTime);
-					// TODO: wakeUp();
-						// nrf_delay_ms(100);
-				//}
-			}
-			else // nfc_state ???
-			{
-				// TODO: String xdripPacket = Build_Packet(Read_Memory());
-				// TODO: Send_Packet(xdripPacket);
-				// TODO: goToSleep (0b100001, sleepTime);
+        }
+      }
+      else // illegal nfc_state
+      {
+        NRF_LOG_PRINTF("Error illegal nfc_state=%d, try reset!\r\n", nfc_state);
 
-				// TODO: wakeCR95HF(100);
-				nrf_delay_ms(100);
-			}
-			UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_OFF));
+        // try startup sequence with reset ...
+        resetCR95HF();
+        nrf_delay_ms(5000);
+      }
+      UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_OFF));
 #endif // CR95HF_IS_ATTACHED
 
+      NRF_LOG_DEBUG(".");
 
-			  NRF_LOG_DEBUG(".");
-			
-				for (int i = 1; i < 30; i++)
-			  {
-					// TODO: real sleep
-          nrf_delay_ms(1000);
-          power_manage();
-				}
+      for (int i = 1; i < 10; i++)
+      {
+        UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_0));
+        nrf_delay_ms(5);
+        UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_OFF));
+        nrf_delay_ms(1000);
+        power_manage();
+      }
     }
 }
 
