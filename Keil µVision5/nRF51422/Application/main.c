@@ -15,7 +15,7 @@
 
 #define ENABLE_BLE_SRV_HRS  0 ///< BLE Heart Rate Service
 #define ENABLE_BLE_SRV_GLS  0 ///< BLE Glucose Service
-#define ENABLE_BLE_SRV_BAS  0  ///< BLE Battery Service
+#define ENABLE_BLE_SRV_BAS  0 ///< BLE Battery Service
 
 /** @file
  *
@@ -59,14 +59,14 @@
 #include "ble_advdata.h"
 #if (ENABLE_BLE_SRV_HRS == 1)
 #include "ble_hrs.h"
-#endif // NABLE_BLE_SRV_HRS
+#endif // ENABLE_BLE_SRV_HRS
 #if (ENABLE_BLE_SRV_GLS == 1)
 #include "ble_gls.h"
 #include "ble_racp.h"
-#endif // NABLE_BLE_SRV_GLS
+#endif // ENABLE_BLE_SRV_GLS
 #if (ENABLE_BLE_SRV_BAS == 1)
 #include "ble_bas.h"
-#endif // NABLE_BLE_SRV_BAS
+#endif // ENABLE_BLE_SRV_BAS
 #include "ble_dis.h"
 #include "ble_conn_params.h"
 #include "boards.h"
@@ -79,6 +79,7 @@
 #include "pstorage.h"
 #include "app_trace.h"
 #include "app_util.h"
+#include "app_scheduler.h"
 #include "bsp.h"
 #include "ant_error.h"
 #include "ant_stack_config.h"
@@ -91,6 +92,41 @@
 #define CR95HF_IS_ATTACHED              1
 #define CR95HF_SLEEP_ENABLED            1
 
+#define ENABLE_BATTERY_MEASURE          1 ///< ADC battery measurement
+#define ENABLE_BATTERY_MEASURE_SDK10    1 ///< ADC battery measurement SDK v10
+#define ENABLE_BATTERY_MEASURE_SDK11    0 ///< ADC battery measurement SDK v11
+
+
+#if (ENABLE_BATTERY_MEASURE == 1)
+#include "nrf_adc.h"
+
+#define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
+APP_TIMER_DEF(m_battery_timer_id);
+
+static void battery_level_update(void);
+static void battery_level_meas_timeout_handler(void * p_context);
+void adc_sample(void);
+
+#if (ENABLE_BATTERY_MEASURE_SDK10 == 1)
+#define ADC_RESOLUTION              ADC_CONFIG_RES_10bit         //Calibration is only performed for 10-bit ADC resolution
+#endif // ENABLE_BATTERY_MEASURE_SDK10
+
+
+#if (ENABLE_BATTERY_MEASURE_SDK11 == 1)
+static void adc_event_handler(nrf_drv_adc_evt_t const * p_event);
+
+#define ADC_BUFFER_SIZE                 6 /**< Size of buffer for ADC samples. */
+static nrf_adc_value_t       adc_buffer[ADC_BUFFER_SIZE]; /**< ADC buffer. */
+static uint8_t adc_event_counter = 0;
+
+#define ADC_REF_VOLTAGE_IN_MILLIVOLTS   1200
+#define ADC_PRE_SCALING_COMPENSATION    3 
+#define DIODE_FWD_VOLT_DROP_MILLIVOLTS  270
+#define ADC_RESULT_IN_MILLI_VOLTS(ADC_VALUE)\
+                                 ((((ADC_VALUE) * ADC_REF_VOLTAGE_IN_MILLIVOLTS) / 1023) * ADC_PRE_SCALING_COMPENSATION)
+#endif // ENABLE_BATTERY_MEASURE_SDK11
+#endif // ENABLE_BATTERY_MEASURE
+
 
 #if (CR95HF_IS_ATTACHED == 1)
 #include "CR95HF.h"
@@ -102,7 +138,10 @@
 #include "LibreSensor.h"
 
 
-#define ANT_FGM_APP_VERSION             101  /**< Application Version (Major=VERSION / 100; Minor=VERSION % 100) */
+#define APP_SCHED_MAX_EVT_SIZE          5
+#define APP_SCHED_QUEUE_SIZE            5
+
+#define ANT_FGM_APP_VERSION             102  /**< Application Version (Major=VERSION / 100; Minor=VERSION % 100) */
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
@@ -113,7 +152,7 @@
 #endif // ENABLE_ANT_FGM
 
 
-#define WAKEUP_BUTTON_ID                 0                                            /**< Button used to wake up the application. */
+#define WAKEUP_BUTTON_ID                0                                            /**< Button used to wake up the application. */
 #define BOND_DELETE_ALL_BUTTON_ID       1                                            /**< Button used for deleting all bonded centrals during startup. */
 
 
@@ -190,11 +229,11 @@ static ble_gap_adv_params_t   m_adv_params;                                /**< 
 
 #if (ENABLE_BLE_SRV_HRS == 1)
 static ble_hrs_t              m_hrs;                                       /**< Structure used to identify the heart rate service. */
-#endif // NABLE_BLE_SRV_HRS
+#endif // ENABLE_BLE_SRV_HRS
 
 #if (ENABLE_BLE_SRV_GLS == 1)
 static ble_gls_t              m_gls;                                      /**< Structure used to identify the glucose service. */
-#endif // NABLE_BLE_SRV_GLS
+#endif // ENABLE_BLE_SRV_GLS
 
 static uint8_t                m_ant_network_key[] = ANT_PUBLIC_NETWORK_KEY; /**< ANT Public network key. */
 
@@ -216,8 +255,8 @@ static bool                             m_app_initialized   = false;            
  */
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
-    bsp_indication_set(BSP_INDICATE_FATAL_ERROR);
-    app_error_handler(DEAD_BEEF, line_num, p_file_name);
+  bsp_indication_set(BSP_INDICATE_FATAL_ERROR);
+  app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
 
@@ -225,16 +264,16 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
  */
 static void ble_advertising_start(void)
 {
-    uint32_t err_code;
+  uint32_t err_code;
 
-    err_code = sd_ble_gap_adv_start(&m_adv_params);
-    if (err_code != NRF_SUCCESS && err_code != NRF_ERROR_INVALID_STATE)
-    {
-        APP_ERROR_HANDLER(err_code);
-    }
+  err_code = sd_ble_gap_adv_start(&m_adv_params);
+  if (err_code != NRF_SUCCESS && err_code != NRF_ERROR_INVALID_STATE)
+  {
+    APP_ERROR_HANDLER(err_code);
+  }
 
-    err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
-    APP_ERROR_CHECK(err_code);
+  err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
+  APP_ERROR_CHECK(err_code);
 }
 
 
@@ -264,6 +303,7 @@ void ant_fgm_evt_handler(ant_fgm_profile_t * p_profile, ant_fgm_evt_t event)
 }
 #endif // ENABLE_ANT_FGM
 
+
 /**@brief Attempt to both open the ant channel and start ble advertising.
 */
 static void ant_and_ble_adv_start(void)
@@ -280,8 +320,35 @@ static void ant_and_ble_adv_start(void)
  */
 static void timers_init(void)
 {
-    // Initialize timer module
-    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, NULL);
+#if (ENABLE_BATTERY_MEASURE == 1)
+  uint32_t err_code;
+#endif // ENABLE_BATTERY_MEASURE
+  
+  // Initialize timer module
+  APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, NULL);
+
+  // Create timers.
+ #if (ENABLE_BATTERY_MEASURE == 1)
+  err_code = app_timer_create(&m_battery_timer_id,
+                              APP_TIMER_MODE_REPEATED,
+                              battery_level_meas_timeout_handler);
+  APP_ERROR_CHECK(err_code);
+#endif // ENABLE_BATTERY_MEASURE
+}
+
+/**@brief Function for starting application timers.
+ */
+static void application_timers_start(void)
+{
+#if (ENABLE_BATTERY_MEASURE == 1)
+  uint32_t err_code;
+#endif // ENABLE_BATTERY_MEASURE
+
+  // Start application timers.
+#if (ENABLE_BATTERY_MEASURE == 1)
+  err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
+  APP_ERROR_CHECK(err_code);
+#endif // ENABLE_BATTERY_MEASURE
 }
 
 
@@ -367,15 +434,15 @@ static void ble_services_init(void)
 #if (ENABLE_BLE_SRV_HRS == 1)
     ble_hrs_init_t hrs_init;
     uint8_t        body_sensor_location;
-#endif // NABLE_BLE_SRV_HRS
+#endif // ENABLE_BLE_SRV_HRS
 
 #if (ENABLE_BLE_SRV_GLS == 1)
     ble_gls_init_t gls_init;
-#endif // NABLE_BLE_SRV_GLS
+#endif // ENABLE_BLE_SRV_GLS
 
 #if (ENABLE_BLE_SRV_BAS == 1)
     ble_bas_init_t bas_init;
-#endif // NABLE_BLE_SRV_BAS
+#endif // ENABLE_BLE_SRV_BAS
 
     ble_dis_init_t dis_init;
 
@@ -400,7 +467,7 @@ static void ble_services_init(void)
 
     err_code = ble_hrs_init(&m_hrs, &hrs_init);
     APP_ERROR_CHECK(err_code);
-#endif // NABLE_BLE_SRV_HRS
+#endif // ENABLE_BLE_SRV_HRS
 
 #if (ENABLE_BLE_SRV_GLS == 1)
     // Initialize Glucose Service - sample selection of feature bits.
@@ -416,7 +483,7 @@ static void ble_services_init(void)
 
     err_code = ble_gls_init(&m_gls, &gls_init);
     APP_ERROR_CHECK(err_code);
-#endif // NABLE_BLE_SRV_GLS
+#endif // ENABLE_BLE_SRV_GLS
 
 #if (ENABLE_BLE_SRV_BAS == 1)
     // Initialize Battery Service.
@@ -436,7 +503,7 @@ static void ble_services_init(void)
 
     err_code = ble_bas_init(&m_bas, &bas_init);
     APP_ERROR_CHECK(err_code);
-#endif // NABLE_BLE_SRV_BAS
+#endif // ENABLE_BLE_SRV_BAS
 
     // Initialize Device Information Service
     memset(&dis_init, 0, sizeof(dis_init));
@@ -508,7 +575,7 @@ static void ble_hrm_conn_params_init(void)
     err_code = ble_conn_params_init(&cp_init);
     APP_ERROR_CHECK(err_code);
 }
-#endif // NABLE_BLE_SRV_HRS
+#endif // ENABLE_BLE_SRV_HRS
 
 #if (ENABLE_BLE_SRV_GLS == 1)
 /**@brief Function for initializing the Connection Parameters module.
@@ -532,7 +599,7 @@ static void ble_gls_conn_params_init(void)
     err_code = ble_conn_params_init(&cp_init);
     APP_ERROR_CHECK(err_code);
 }
-#endif // NABLE_BLE_SRV_GLS
+#endif // ENABLE_BLE_SRV_GLS
 
 
 /**@brief Function for dispatching a ANT stack event to all modules with a ANT stack event handler.
@@ -596,7 +663,7 @@ static void ble_hrs_update_heart_rate(const uint16_t computed_heart_rate)
       APP_ERROR_HANDLER(err_code);
   }
 }
-#endif // NABLE_BLE_SRV_HRS
+#endif // ENABLE_BLE_SRV_HRS
 
 
 /**@brief Application's Stack BLE event handler.
@@ -679,20 +746,20 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
 static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
 #ifdef BONDING_ENABLE
-    dm_ble_evt_handler(p_ble_evt);
+  dm_ble_evt_handler(p_ble_evt);
 #endif // BONDING_ENABLE
 
 #if (ENABLE_BLE_SRV_HRS == 1)
-    ble_hrs_on_ble_evt(&m_hrs, p_ble_evt);
-    ble_hrs_conn_params_on_ble_evt(p_ble_evt);
-#endif // NABLE_BLE_SRV_HRS
+  ble_hrs_on_ble_evt(&m_hrs, p_ble_evt);
+  ble_hrs_conn_params_on_ble_evt(p_ble_evt);
+#endif // ENABLE_BLE_SRV_HRS
 
 #if (ENABLE_BLE_SRV_GLS == 1)
+  // TODO
+#endif // ENABLE_BLE_SRV_GLS
 
-#endif // NABLE_BLE_SRV_GLS
 
-
-    on_ble_evt(p_ble_evt);
+  on_ble_evt(p_ble_evt);
 }
 
 
@@ -858,63 +925,275 @@ static void power_manage(void)
 }
 
 
+
+
+#if (ENABLE_BATTERY_MEASURE == 1)
+/**@brief Function for performing battery measurement and updating the Battery Level characteristic
+ *        in Battery Service.
+ */
+static void battery_level_update(void)
+{
+  //battery_level = (uint8_t)sensorsim_measure(&m_battery_sim_state, &m_battery_sim_cfg);
+
+  NRF_LOG_DEBUG("\r\n    Triggering battery level update...\r\n");
+  app_sched_event_put(0,0,(app_sched_event_handler_t)adc_sample); //Put adc_sample function into the scheduler queue, which will then be executed in the main context (lowest priority) when app_sched_execute is called in the main loop
+}
+
+
+/**@brief Function for handling the Battery measurement timer timeout.
+ *
+ * @details This function will be called each time the battery level measurement timer expires.
+ *
+ * @param[in] p_context  Pointer used for passing some arbitrary information (context) from the
+ *                       app_start_timer() call to the timeout handler.
+ */
+static void battery_level_meas_timeout_handler(void * p_context)
+{
+  UNUSED_PARAMETER(p_context);
+  battery_level_update();
+}
+
+
+#if (ENABLE_BATTERY_MEASURE_SDK10 == 1)
+bool adc_calibrate(uint16_t adc_result, uint16_t * adc_result_calibrated, uint8_t adc_resolution)
+{
+  uint32_t uicr_value;
+  uint8_t offset_error;
+  uint8_t gain_error;
+  bool is_calibrated;
+
+  // Apply ADC calibration described on 
+  // https://devzone.nordicsemi.com/question/21653/how-to-calibrate-the-nrf51-adc-to-correct-offset-and-gain-error/
+  uicr_value = *(uint32_t *)0x10000024; // Read ADC gain and offset error from UICR
+  offset_error = uicr_value;
+  gain_error = uicr_value >> 8;
+
+  if(adc_resolution == ADC_CONFIG_RES_10bit)
+  {
+    *adc_result_calibrated = adc_result * (1024 + gain_error) / 1024 + offset_error; //calibrate
+    is_calibrated = true;
+  }
+  else
+  {
+    // Calibration method not valid for given ADC resolution. Return adc value uncalibrated.
+    *adc_result_calibrated = adc_result;      
+    is_calibrated = false;
+  }
+  return is_calibrated;
+}
+
+/* Interrupt handler for ADC data ready event */
+void ADC_IRQHandler(void)
+{
+  uint16_t adc_result_calibrated;
+  uint8_t adc_result[2];
+
+  /* Clear dataready event */
+  NRF_ADC->EVENTS_END = 0;
+
+  // Attempt to calibrate the ADC result
+  adc_calibrate(NRF_ADC->RESULT, &adc_result_calibrated, ADC_RESOLUTION);
+
+  NRF_LOG_PRINTF("ADC result: %X\r\n", adc_result_calibrated); // log ADC reult on UART
+
+  adc_result[0] = adc_result_calibrated;
+  adc_result[1] = adc_result_calibrated >> 8;
+
+  NRF_LOG_PRINTF("ADC result: %X%X\r\n", adc_result[0], adc_result[1]); // log ADC reult on UART
+
+  // Release the external crystal
+  sd_clock_hfclk_release();
+}
+#endif // ENABLE_BATTERY_MEASURE_SDK10
+
+#if (ENABLE_BATTERY_MEASURE_SDK11 == 1)
+/**
+ * @brief ADC interrupt handler.
+ */
+static void adc_event_handler(nrf_drv_adc_evt_t const * p_event)
+{
+  uint32_t err_code;
+  uint16_t adc_sum_value = 0;
+  uint16_t adc_average_value;
+  uint16_t adc_result_millivolts;
+  uint8_t  adc_result_percent;
+
+  sd_clock_hfclk_release(); // Release the external crystal
+
+  adc_event_counter++;
+  printf("    ADC event counter: %d\r\n", adc_event_counter);
+  if (p_event->type == NRF_DRV_ADC_EVT_DONE)
+  {
+    uint32_t i;
+    for (i = 0; i < p_event->data.done.size; i++)
+    {
+      printf("Sample value %d: %d\r\n", i+1, p_event->data.done.p_buffer[i]);
+      adc_sum_value += p_event->data.done.p_buffer[i];                           //Sum all values in ADC buffer
+    }
+    adc_average_value = adc_sum_value / p_event->data.done.size;                   //Calculate average value from all samples in the ADC buffer
+    printf("Average ADC value: %d\r\n", adc_average_value);
+
+    adc_result_millivolts = ADC_RESULT_IN_MILLI_VOLTS(adc_average_value);          //Transform the average ADC value into millivolts value
+    printf("ADC result in millivolts: %d\r\n", adc_result_millivolts);
+
+    adc_result_percent = battery_level_in_percent(adc_result_millivolts);          //Transform the millivolts value into battery level percent.
+    printf("ADC result in percent: %d\r\n", adc_result_percent);
+
+#if (ENABLE_BLE_SRV_BAS == 1)
+    //Send the battery level over BLE
+    err_code = ble_bas_battery_level_update(&m_bas, adc_result_percent);           // Send the battery level over BLE
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) && 
+        (err_code != BLE_ERROR_NO_TX_PACKETS) && 
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING))
+    {
+      APP_ERROR_HANDLER(err_code); //Assert on error
+    }
+#endif // ENABLE_BLE_SRV_BAS
+  }
+}
+#endif // ENABLE_BATTERY_MEASURE_SDK11
+
+/**
+ * @brief Configure and initialize the ADC
+ */
+static void adc_config(void)
+{
+#if (ENABLE_BATTERY_MEASURE_SDK10 == 1)
+  /* Enable interrupt on ADC sample ready event*/
+  NRF_ADC->INTENSET = ADC_INTENSET_END_Msk;   
+  sd_nvic_SetPriority(ADC_IRQn, NRF_APP_PRIORITY_LOW);  
+  sd_nvic_EnableIRQ(ADC_IRQn);
+
+  NRF_ADC->CONFIG	= (ADC_CONFIG_EXTREFSEL_None << ADC_CONFIG_EXTREFSEL_Pos) /* Bits 17..16 : ADC external reference pin selection. */
+                  | (ADC_CONFIG_PSEL_AnalogInput5 << ADC_CONFIG_PSEL_Pos)   /*!< Use analog input 2 as analog input. */
+                  | (ADC_CONFIG_REFSEL_VBG << ADC_CONFIG_REFSEL_Pos)        /*!< Use internal 1.2V bandgap voltage as reference for conversion. */
+                  | (ADC_CONFIG_INPSEL_AnalogInputOneThirdPrescaling << ADC_CONFIG_INPSEL_Pos) /*!< Analog input specified by PSEL with no prescaling used as input for the conversion. */
+                  | (ADC_CONFIG_RES_8bit << ADC_CONFIG_RES_Pos);            /*!< 8bit ADC resolution. */ 
+
+  /* Enable ADC*/
+  NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Enabled;
+#endif // ENABLE_BATTERY_MEASURE_SDK10
+
+#if (ENABLE_BATTERY_MEASURE_SDK11 == 1)
+  ret_code_t ret_code;
+  nrf_drv_adc_config_t adc_config = NRF_DRV_ADC_DEFAULT_CONFIG;                                          // Get default ADC configuration
+  static nrf_drv_adc_channel_t adc_channel_config = NRF_DRV_ADC_DEFAULT_CHANNEL(NRF_ADC_CONFIG_INPUT_2); // Get default ADC channel configuration
+
+  //Uncomment the following two lines to sample the supply voltage of the nRF51 directly (not from a pin)
+  //adc_channel_config.config.config.input = NRF_ADC_CONFIG_SCALING_SUPPLY_ONE_THIRD;
+  //adc_channel_config.config.config.ain = NRF_ADC_CONFIG_INPUT_DISABLED;
+
+  ret_code = nrf_drv_adc_init(&adc_config, adc_event_handler);              //Initialize the ADC
+  APP_ERROR_CHECK(ret_code);
+
+  nrf_drv_adc_channel_enable(&adc_channel_config);                          //Configure and enable an ADC channel
+#endif // ENABLE_BATTERY_MEASURE_SDK11
+}
+
+/**
+ * @brief Function to trigger ADC sampling
+ */
+void adc_sample(void)
+{
+#if (ENABLE_BATTERY_MEASURE_SDK10 == 1)
+  uint32_t p_is_running = 0;
+    
+  // Start the HFCLK crystal for best ADC accuracy. It will increase current consumption.
+  sd_clock_hfclk_request();
+  while(! p_is_running) {
+    //wait for the hfclk to be available
+    sd_clock_hfclk_is_running((&p_is_running));
+  }               
+  NRF_ADC->TASKS_START = 1; //Start ADC sampling
+#endif // ENABLE_BATTERY_MEASURE_SDK10
+  
+#if (ENABLE_BATTERY_MEASURE_SDK11 == 1)
+  ret_code_t ret_code;
+  uint32_t p_is_running = 0;
+
+  ret_code = nrf_drv_adc_buffer_convert(adc_buffer, ADC_BUFFER_SIZE);       // Allocate buffer for ADC
+  APP_ERROR_CHECK(ret_code);
+
+  //Request the external high frequency crystal for best ADC accuracy. For lowest current consumption, don't request the crystal.
+  sd_clock_hfclk_request();
+  while(! p_is_running) {          //wait for the hfclk to be available
+      sd_clock_hfclk_is_running((&p_is_running));
+  }  
+
+  for (uint32_t i = 0; i < ADC_BUFFER_SIZE; i++)
+  {
+      while((NRF_ADC->BUSY & ADC_BUSY_BUSY_Msk) == ADC_BUSY_BUSY_Busy) {}   //Wait until the ADC is finished sampling
+      printf("Start sampling ... \r\n");
+      nrf_drv_adc_sample();        // Trigger ADC conversion
+  }
+#endif // ENABLE_BATTERY_MEASURE_SDK11
+}
+
+#endif // ENABLE_BATTERY_MEASURE
+
+
+
 /**@brief Application main function.
  */
 int main(void)
 {
-    uint32_t err_code;
+  uint32_t err_code;
 
-    NRF_LOG_DEBUG("\r\n***************************\r\n");
-    NRF_LOG_DEBUG(DEVICE_NAME);
-    NRF_LOG_DEBUG("\r\n***************************\r\n");
+  NRF_LOG_DEBUG("\r\n***************************\r\n");
+  NRF_LOG_DEBUG(DEVICE_NAME);
+  NRF_LOG_DEBUG("\r\n***************************\r\n");
 
-    // Initialize peripherals
-    timers_init();
+  // Initialize peripherals
+  timers_init();
 
-    // Initialize S310 SoftDevice
-    ble_ant_stack_init();
+  // Initialize scheduler
+  APP_SCHED_INIT(APP_SCHED_MAX_EVT_SIZE, APP_SCHED_QUEUE_SIZE);
 
-    err_code = bsp_init(BSP_INIT_LED | BSP_INIT_BUTTONS, APP_TIMER_TICKS(100, APP_TIMER_PRESCALER), NULL);
-    APP_ERROR_CHECK(err_code);
-    // err_code = bsp_buttons_enable((1 << WAKEUP_BUTTON_ID) | (1 << BOND_DELETE_ALL_BUTTON_ID));
-    // APP_ERROR_CHECK(err_code);
+  // Initialize S310 SoftDevice
+  ble_ant_stack_init();
 
-    // Initialize Bluetooth stack parameters.
-    ble_gap_params_init();
-    ble_advertising_init();
-    ble_services_init();
+  err_code = bsp_init(BSP_INIT_LED | BSP_INIT_BUTTONS, APP_TIMER_TICKS(100, APP_TIMER_PRESCALER), NULL);
+  APP_ERROR_CHECK(err_code);
+  // err_code = bsp_buttons_enable((1 << WAKEUP_BUTTON_ID) | (1 << BOND_DELETE_ALL_BUTTON_ID));
+  // APP_ERROR_CHECK(err_code);
+
+  // Initialize Bluetooth stack parameters.
+  ble_gap_params_init();
+  ble_advertising_init();
+  ble_services_init();
 
 #if (ENABLE_BLE_SRV_HRS == 1)
-    ble_hrm_conn_params_init();
-#endif // NABLE_BLE_SRV_HRS
+  ble_hrm_conn_params_init();
+#endif // ENABLE_BLE_SRV_HRS
 
 #if (ENABLE_BLE_SRV_GLS == 1)
-    ble_gls_conn_params_init();
-#endif // NABLE_BLE_SRV_GLS
+  ble_gls_conn_params_init();
+#endif // ENABLE_BLE_SRV_GLS
 
 
-    //utils_setup();
-    softdevice_setup();
+  //utils_setup();
+  softdevice_setup();
 
 #if (ENABLE_ANT_FGM == 1)
-    ant_state_indicator_init(m_ant_fgm.channel_number, FGM_SENS_CHANNEL_TYPE);
+  ant_state_indicator_init(m_ant_fgm.channel_number, FGM_SENS_CHANNEL_TYPE);
 #endif // ENABLE_ANT_FGM
 
-    profile_setup();
+  profile_setup();
 
 
 #ifdef BONDING_ENABLE
-    uint32_t count;
+  uint32_t count;
 
-    // Initialize device manager.
-    device_manager_init();
+  // Initialize device manager.
+  device_manager_init();
 
-    err_code = pstorage_access_status_get(&count);
-    if ((err_code == NRF_SUCCESS) && (count == 0))
+  err_code = pstorage_access_status_get(&count);
+  if ((err_code == NRF_SUCCESS) && (count == 0))
 #endif // BONDING_ENABLE
-    {
-        ant_and_ble_adv_start();
-    }
+  {
+    ant_and_ble_adv_start();
+  }
 
 #if (CR95HF_IS_ATTACHED == 1)
   NRF_LOG_PRINTF("Init CR95HF!\r\n");
@@ -934,167 +1213,176 @@ int main(void)
 #endif // CR95HF_SLEEP_ENABLED
 #endif // CR95HF_IS_ATTACHED
 
-    // Enter main loop.
-    for (;;)
-    {
-      // Little TODO-List:
-      // - CR95HF schlafen legen
-      // - Fehler oder Error Rate? sozusagen ein Retry-Z�hler als Art Qualityidicator
-      // - Fehler/Erfolgsverhältnis?
-      // - Batteriestand
-      // - Sensorrestlaufzeit bzw. Fehler wenn abgelaufen
+#if (ENABLE_BATTERY_MEASURE == 1)
+  adc_config(); // Initialize ADC
+#endif // ENABLE_BATTERY_MEASURE
+
+  // Start execution.
+  application_timers_start();
+  
+  // Enter main loop.
+  for (;;)
+  {
+    // Little TODO-List:
+    // - CR95HF schlafen legen
+    // - Fehler oder Error Rate? sozusagen ein Retry-Z�hler als Art Qualityidicator
+    // - Fehler/Erfolgsverhältnis?
+    // - Batteriestand
+    // - Sensorrestlaufzeit bzw. Fehler wenn abgelaufen
 
 #if (CR95HF_IS_ATTACHED == 1)
-      UNUSED_VARIABLE(bsp_indication_set(CR95HF_BSP_USER_STATE));
+    UNUSED_VARIABLE(bsp_indication_set(CR95HF_BSP_USER_STATE));
 
-      CR95HF_STATES nfc_state = getStateCR95HF();
+    CR95HF_STATES nfc_state = getStateCR95HF();
 
 #if (ENABLE_ANT_FGM == 1)
-      // New state...
-      m_ant_fgm.FGM_PROFILE_nfc_state = (uint8_t)nfc_state;
+    // New state...
+    m_ant_fgm.FGM_PROFILE_nfc_state = (uint8_t)nfc_state;
 #endif // ENABLE_ANT_FGM
 
-      if (nfc_state == CR95HF_STATE_UNKNOWN)
-      {
-        // try startup sequence with reset ...
-        resetCR95HF(); // send a reset command just in case the CR95HF hasn't been powered off
+    if (nfc_state == CR95HF_STATE_UNKNOWN)
+    {
+      // try startup sequence with reset ...
+      resetCR95HF(); // send a reset command just in case the CR95HF hasn't been powered off
 
-        nrf_delay_ms(100);
-      }
-      else if (nfc_state == CR95HF_STATE_SLEEPING)
+      nrf_delay_ms(100);
+    }
+    else if (nfc_state == CR95HF_STATE_SLEEPING)
+    {
+      // wake up CR95HF
+      NRF_LOG_PRINTF("CR95HF wake up...\r\n");
+      if (!wakeCR95HF(CR95HF_DEFAULT_TIMEOUT_MS)) // otherwise no communication possible
       {
-        // wake up CR95HF
-        NRF_LOG_PRINTF("CR95HF wake up...\r\n");
-        if (!wakeCR95HF(CR95HF_DEFAULT_TIMEOUT_MS)) // otherwise no communication possible
+        NRF_LOG_PRINTF("CR95HF state was SLEEPING, but wakeup failed!\r\n");
+      }
+    }
+    else if (nfc_state == CR95HF_STATE_ANSWERING)
+    {
+      // NFC chip is answering
+      // now set to protocol mode
+      protocolISO15693_CR95HF(CR95HF_PROTOCOL_ISO_15693_WAIT_FOR_SOF
+                              | CR95HF_PROTOCOL_ISO_15693_10_MODULATION
+                              | CR95HF_PROTOCOL_ISO_15693_CRC); // ISO 15693 settings --> 0x0D = Wait for SOF, 10% modulation, append CRC
+    }
+    else if ((nfc_state == CR95HF_STATE_PROTOCOL) || (nfc_state == CR95HF_STATE_TAG_IN_RANGE))
+    {
+      // Tags can be read now... let's try:
+      static CR95HF_TAG stKnownNfcTag;
+      CR95HF_TAG tFoundNfcTag;
+      bool fIsNewFoungTag = false;
+      if (inventoryISO15693_CR95HF(&tFoundNfcTag, CR95HF_DEFAULT_TIMEOUT_MS)) // sensor in range?
+      {
+        // Yes, Sensor found!
+        if (0 != memcmp(stKnownNfcTag.uid, tFoundNfcTag.uid, sizeof(tFoundNfcTag.uid)))
         {
-          NRF_LOG_PRINTF("CR95HF state was SLEEPING, but wakeup failed!\r\n");
-        }
-      }
-      else if (nfc_state == CR95HF_STATE_ANSWERING)
-      {
-        // NFC chip is answering
-        // now set to protocol mode
-        protocolISO15693_CR95HF(CR95HF_PROTOCOL_ISO_15693_WAIT_FOR_SOF
-                                | CR95HF_PROTOCOL_ISO_15693_10_MODULATION
-                                | CR95HF_PROTOCOL_ISO_15693_CRC); // ISO 15693 settings --> 0x0D = Wait for SOF, 10% modulation, append CRC
-      }
-      else if ((nfc_state == CR95HF_STATE_PROTOCOL) || (nfc_state == CR95HF_STATE_TAG_IN_RANGE))
-      {
-        // Tags can be read now... let's try:
-        static CR95HF_TAG stKnownNfcTag;
-        CR95HF_TAG tFoundNfcTag;
-        bool fIsNewFoungTag = false;
-        if (inventoryISO15693_CR95HF(&tFoundNfcTag, CR95HF_DEFAULT_TIMEOUT_MS)) // sensor in range?
-        {
-          // Yes, Sensor found!
-          if (0 != memcmp(stKnownNfcTag.uid, tFoundNfcTag.uid, sizeof(tFoundNfcTag.uid)))
-          {
-            // is new / changed
-            NRF_LOG_PRINTF("new sensor found: UID=%#02x:%#02x:%#02x:%#02x:%#02x:%#02x:%#02x:%#02x!\r\n",
-                           tFoundNfcTag.uid[0], tFoundNfcTag.uid[1], tFoundNfcTag.uid[2], tFoundNfcTag.uid[3], tFoundNfcTag.uid[4], tFoundNfcTag.uid[5], tFoundNfcTag.uid[6], tFoundNfcTag.uid[7]);
-            stKnownNfcTag = tFoundNfcTag;
-            fIsNewFoungTag = true;
+          // is new / changed
+          NRF_LOG_PRINTF("new sensor found: UID=%#02x:%#02x:%#02x:%#02x:%#02x:%#02x:%#02x:%#02x!\r\n",
+                         tFoundNfcTag.uid[0], tFoundNfcTag.uid[1], tFoundNfcTag.uid[2], tFoundNfcTag.uid[3], tFoundNfcTag.uid[4], tFoundNfcTag.uid[5], tFoundNfcTag.uid[6], tFoundNfcTag.uid[7]);
+          stKnownNfcTag = tFoundNfcTag;
+          fIsNewFoungTag = true;
 
 #if (ENABLE_ANT_FGM == 1)
-            // we use last two tag-uid bytes for our serial number
-            m_ant_fgm.FGM_PROFILE_serial_num = (tFoundNfcTag.uid[6] << 8) + tFoundNfcTag.uid[7];
+          // we use last two tag-uid bytes for our serial number
+          m_ant_fgm.FGM_PROFILE_serial_num = (tFoundNfcTag.uid[6] << 8) + tFoundNfcTag.uid[7];
 #endif // ENABLE_ANT_FGM
 
 
 #if (ENABLE_BLE_SRV_HRS == 1)
-            // BLE HRS Service HRM update:
-            const uint16_t glucose_value = tFoundNfcTag.uid[7]; // Letzte Stelle vom Sensor nehmen
-            ble_hrs_update_heart_rate(glucose_value);
-#endif // NABLE_BLE_SRV_HRS
+          // BLE HRS Service HRM update:
+          const uint16_t glucose_value = tFoundNfcTag.uid[7]; // Letzte Stelle vom Sensor nehmen
+          ble_hrs_update_heart_rate(glucose_value);
+#endif // ENABLE_BLE_SRV_HRS
 
 #if (ENABLE_BLE_SRV_GLS == 1)
-            // TODO
-#endif // NABLE_BLE_SRV_GLS
+          // TODO
+#endif // ENABLE_BLE_SRV_GLS
+        }
+
+        bool fReadAllOk = true;
+        uint8_t au8SensorRawData[LIBRE_SENSOR_RAW_DATA_LENGTH];
+        for (uint8_t adr = LIBRE_SENSOR_RAW_DATA_START_BLOCK; adr <= LIBRE_SENSOR_RAW_DATA_END_BLOCK; adr++)
+        {
+          int len = readSingleCR95HF(adr, &au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE], LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE, CR95HF_DEFAULT_TIMEOUT_MS, CR95HF_READ_MAX_RETRY_CNT);
+          if (LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE != len)
+          {
+            // Error
+            NRF_LOG_DEBUG("Error while reading sensor data!\r\n");
+            fReadAllOk = false;
+            break;
           }
 
-          bool fReadAllOk = true;
-          uint8_t au8SensorRawData[LIBRE_SENSOR_RAW_DATA_LENGTH];
-          for (uint8_t adr = LIBRE_SENSOR_RAW_DATA_START_BLOCK; adr <= LIBRE_SENSOR_RAW_DATA_END_BLOCK; adr++)
+          if (fIsNewFoungTag)
           {
-            int len = readSingleCR95HF(adr, &au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE], LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE, CR95HF_DEFAULT_TIMEOUT_MS, CR95HF_READ_MAX_RETRY_CNT);
-            if (LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE != len)
-            {
-              // Error
-              NRF_LOG_DEBUG("Error while reading sensor data!\r\n");
-              fReadAllOk = false;
-              break;
-            }
+            // DEBUG: print new Sensor data:
+            NRF_LOG_PRINTF("block %#04d: %#02x %#02x %#02x %#02x %#02x %#02x %#02x %#02x\r\n", adr,
+                           au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+0],
+                           au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+1],
+                           au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+2],
+                           au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+3],
+                           au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+4],
+                           au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+5],
+                           au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+6],
+                           au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+7]);
+          }
+        }
 
+        if (fReadAllOk)
+        {
+          // Ok, all nfc tag data read
+          ST_LibreSensorData tSensorData;
+          if (LibreSensor_ParseSensorData(tFoundNfcTag.uid, &au8SensorRawData[0], sizeof(au8SensorRawData), &tSensorData))
+          {
+            // Parsing ok
             if (fIsNewFoungTag)
             {
-              // DEBUG: print new Sensor data:
-              NRF_LOG_PRINTF("block %#04d: %#02x %#02x %#02x %#02x %#02x %#02x %#02x %#02x\r\n", adr,
-                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+0],
-                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+1],
-                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+2],
-                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+3],
-                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+4],
-                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+5],
-                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+6],
-                             au8SensorRawData[(adr - LIBRE_SENSOR_RAW_DATA_START_BLOCK) * LIBRE_SENSOR_RAW_DATA_BLOCK_SIZE+7]);
+              NRF_LOG_PRINTF("sensor_id: '%s'\r\n", tSensorData.sensor_id);
             }
-          }
-
-          if (fReadAllOk)
-          {
-            // Ok, all nfc tag data read
-            ST_LibreSensorData tSensorData;
-            if (LibreSensor_ParseSensorData(tFoundNfcTag.uid, &au8SensorRawData[0], sizeof(au8SensorRawData), &tSensorData))
-            {
-              // Parsing ok
-              if (fIsNewFoungTag)
-              {
-                NRF_LOG_PRINTF("sensor_id: '%s'\r\n", tSensorData.sensor_id);
-              }
 
 #if (CR95HF_SLEEP_ENABLED == 1)
-              NRF_LOG_PRINTF("CR95HF will hybernate, gn8...\r\n");
-              if (!hybernateCR95HF())
-              {
-                NRF_LOG_PRINTF("CR95HF hybernate failed!\r\n");
-              }
+            NRF_LOG_PRINTF("CR95HF will hybernate, gn8...\r\n");
+            if (!hybernateCR95HF())
+            {
+              NRF_LOG_PRINTF("CR95HF hybernate failed!\r\n");
+            }
 #endif // CR95HF_SLEEP_ENABLED
 
 #if (ENABLE_ANT_FGM == 1)
-              // New measurement...
-              m_ant_fgm.FGM_PROFILE_meas_glucose = tSensorData.current_glucose;
-              m_ant_fgm.FGM_PROFILE_meas_time_offset++;
-              m_ant_fgm.FGM_PROFILE_meas_prediction = tSensorData.trend_prediction;
-              m_ant_fgm.FGM_PROFILE_meas_climb_sink_rate = tSensorData.glucose_climb_sink_rate;
-              m_ant_fgm.FGM_PROFILE_meas_sequence_num++;
+            // New measurement...
+            m_ant_fgm.FGM_PROFILE_meas_glucose = tSensorData.current_glucose;
+            m_ant_fgm.FGM_PROFILE_meas_time_offset++;
+            m_ant_fgm.FGM_PROFILE_meas_prediction = tSensorData.trend_prediction;
+            m_ant_fgm.FGM_PROFILE_meas_climb_sink_rate = tSensorData.glucose_climb_sink_rate;
+            m_ant_fgm.FGM_PROFILE_meas_sequence_num++;
 #endif // ENABLE_ANT_FGM
-            }
           }
-
         }
-      }
-      else // illegal nfc_state
-      {
-        NRF_LOG_PRINTF("Error illegal nfc_state=%d, try reset!\r\n", nfc_state);
 
-        // try startup sequence with reset ...
-        resetCR95HF();
-        nrf_delay_ms(5000);
-      }
-      UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_OFF));
-#endif // CR95HF_IS_ATTACHED
-
-      NRF_LOG_DEBUG(".");
-
-      for (int i = 1; i < 10; i++)
-      {
-        UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_0));
-        nrf_delay_ms(5);
-        UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_OFF));
-        nrf_delay_ms(1000);
-        power_manage();
       }
     }
+    else // illegal nfc_state
+    {
+      NRF_LOG_PRINTF("Error illegal nfc_state=%d, try reset!\r\n", nfc_state);
+
+      // try startup sequence with reset ...
+      resetCR95HF();
+      nrf_delay_ms(5000);
+    }
+    UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_OFF));
+#endif // CR95HF_IS_ATTACHED
+
+    NRF_LOG_DEBUG(".");
+
+    for (int i = 1; i < 10; i++)
+    {
+      UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_0));
+      nrf_delay_ms(5);
+      UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_USER_STATE_OFF));
+      nrf_delay_ms(1000);
+      
+      power_manage();
+      app_sched_execute(); // Let scheduler execute whatever is in the scheduler queue
+    }
+  }
 }
 
 /**

@@ -1,2 +1,10 @@
 Documentation can be found offline at: <keil_location>/ARM/Pack/NordicSemiconductor//10.0.0/documentation
 Documentation can be found online at: http://developer.nordicsemi.com/nRF51_SDK/doc/
+
+battery measurement based on: 
+  https://github.com/NordicSemiconductor/nrf51-ADC-examples/tree/master/ble_app_hrs_adc_battery_measurement
+  https://github.com/NordicSemiconductor/nrf51-ADC-examples/blob/nRF51-SDK-9-0-0/ble_app_template__ADC_sampling__app_trace__NUS/main.c
+
+Scheduler Tutorial:          https://devzone.nordicsemi.com/tutorials/23/
+Application Timer Tutorial   https://devzone.nordicsemi.com/tutorials/19/
+
