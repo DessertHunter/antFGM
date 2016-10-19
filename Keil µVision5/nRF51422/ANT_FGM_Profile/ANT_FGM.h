@@ -215,6 +215,7 @@ struct ant_fgm_profile_s
 #define FGM_PROFILE_meas_climb_sink_rate   page_0.glucose_climb_sink_rate
 #define FGM_PROFILE_operating_time         page_1.operating_time
 #define FGM_PROFILE_nfc_state              page_1.nfc_state
+#define FGM_PROFILE_battery_level          page_1.battery_level
 #define FGM_PROFILE_manuf_id               page_2.manuf_id
 #define FGM_PROFILE_serial_num             page_2.serial_num
 #define FGM_PROFILE_hw_version             page_3.hw_version

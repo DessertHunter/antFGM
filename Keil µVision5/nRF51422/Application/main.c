@@ -106,9 +106,10 @@ APP_TIMER_DEF(m_battery_timer_id);
 static void battery_level_update(void);
 static void battery_level_meas_timeout_handler(void * p_context);
 void adc_sample(void);
+static uint8_t m_battery_level_percent = 0; /**< Battery level in percent (0-100%) */
 
 #if (ENABLE_BATTERY_MEASURE_SDK10 == 1)
-#define ADC_RESOLUTION              ADC_CONFIG_RES_10bit         //Calibration is only performed for 10-bit ADC resolution
+#define ADC_RESOLUTION              ADC_CONFIG_RES_10bit         // Calibration is only performed for 10-bit ADC resolution
 #endif // ENABLE_BATTERY_MEASURE_SDK10
 
 
@@ -116,7 +117,7 @@ void adc_sample(void);
 static void adc_event_handler(nrf_drv_adc_evt_t const * p_event);
 
 #define ADC_BUFFER_SIZE                 6 /**< Size of buffer for ADC samples. */
-static nrf_adc_value_t       adc_buffer[ADC_BUFFER_SIZE]; /**< ADC buffer. */
+static nrf_adc_value_t adc_buffer[ADC_BUFFER_SIZE]; /**< ADC buffer. */
 static uint8_t adc_event_counter = 0;
 
 #define ADC_REF_VOLTAGE_IN_MILLIVOLTS   1200
@@ -954,6 +955,70 @@ static void battery_level_meas_timeout_handler(void * p_context)
 }
 
 
+/** @brief Function for converting the input voltage (in milli volts) into percentage of 4.2 Volts.
+ *         Based on battery_level_in_percent implementation in app_util.h
+ *
+ *  @details The calculation is based on a linearized version of the battery's discharge
+ *           curve. 
+ *           The Lithium battery typically has a voltage range of 2.7 - 4.2 V and we (Nordic) 
+ *           recommend that you divide the battery voltage with two resistors, 
+ *           R1 = 10 MOhm and R2 = 2.2 MOhm.
+ *           voltage range on the ADC AIN input pin is:
+ *            - Maximum voltage: 4.2 V * (2.2 M/(2.2 M+10 M)) = 0.757 V
+ *            - Minimum voltage: 2.7 V * (2.2 M/(2.2 M+10 M)) = 0.487 V
+ *            - ADC value at 4.2 V - 10 bit setup: 0.757 V/1.2*1023 = 646
+ *            - ADC value at 2.7 V - 10 bit setup: 0.487 V/1.2*1023 = 415
+ *            - Usable ADC resolution - 10 bit setup: 646-415 = 231
+ *
+ *           The discharge curve for LiPo battery is non-linear. In this model it is split into
+ *           4 linear sections:
+ *           - Section 1: 4.2V - 3.8V = 100% - 60% (40% drop on 400 mV)
+ *           - Section 2: 3.8V - 3.7V = 60% - 35% (25% drop on 100 mV)
+ *           - Section 3: 3.7V - 3.5V = 35% - 5% (30% drop on 200 mV)
+ *           - Section 4: 3.5V - 2.7V = 5% - 0% (5% drop on 800 mV)
+ *           
+ *           based on 1C https://cdn-learn.adafruit.com/assets/assets/000/000/979/medium800/components_tenergydischarge.gif?1396767554
+ *           These numbers are by no means accurate. Temperature and
+ *           load in the actual application is not accounted for!
+ *
+ *  @param[in] mvolts The voltage in mV
+ *
+ *  @return    Battery level in percent.
+*/
+static __INLINE uint8_t lipo_level_in_percent(const uint16_t adc_result)
+{
+  uint8_t battery_level;
+  const uint16_t mvolts = (uint16_t)((float)adc_result * 6.5f); // TODO: ADC_RESULT_IN_MILLI_VOLTS
+
+  if (mvolts >= 4200)
+  {
+    battery_level = 100;
+  }
+  else if (mvolts > 3800)
+  {
+    battery_level = 100 - ((4200 - mvolts) * 40) / 400; // Section 1
+  }
+  else if (mvolts > 3700)
+  {
+    battery_level = 60 - ((3800 - mvolts) * 25) / 100; // Section 2
+  }
+  else if (mvolts > 2440)
+  {
+    battery_level = 35 - ((3700 - mvolts) * 30) / 200; // Section 3
+  }
+  else if (mvolts > 2700)
+  {
+    battery_level = 5 - ((3500 - mvolts) * 5) / 800; // Section 4
+  }
+  else
+  {
+    battery_level = 0;
+  }
+
+  return battery_level;
+}
+
+
 #if (ENABLE_BATTERY_MEASURE_SDK10 == 1)
 bool adc_calibrate(uint16_t adc_result, uint16_t * adc_result_calibrated, uint8_t adc_resolution)
 {
@@ -1001,6 +1066,11 @@ void ADC_IRQHandler(void)
 
   NRF_LOG_PRINTF("ADC result: %X%X\r\n", adc_result[0], adc_result[1]); // log ADC reult on UART
 
+  // Update measured ADC value as battery level
+  m_battery_level_percent = lipo_level_in_percent(adc_result_calibrated);
+  NRF_LOG_PRINTF("ADC result: %d => %d%%\r\n", adc_result_calibrated, m_battery_level_percent); // log ADC reult on UART
+   
+  
   // Release the external crystal
   sd_clock_hfclk_release();
 }
@@ -1238,6 +1308,11 @@ int main(void)
 #if (ENABLE_ANT_FGM == 1)
     // New state...
     m_ant_fgm.FGM_PROFILE_nfc_state = (uint8_t)nfc_state;
+    
+#if (ENABLE_BATTERY_MEASURE == 1)
+    m_ant_fgm.FGM_PROFILE_battery_level = m_battery_level_percent;
+#endif // ENABLE_BATTERY_MEASURE
+          
 #endif // ENABLE_ANT_FGM
 
     if (nfc_state == CR95HF_STATE_UNKNOWN)

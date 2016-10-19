@@ -33,7 +33,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
 
     var data; // class FGM_Data
     var searching; // boolean
-    var deviceCfg;
+    var deviceCfg; // class Ant.DeviceConfig
 
     // Contains data of all Pages
     class FGM_Data
@@ -59,6 +59,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
 
         // Page 1
         var nfcState; // uint8_t
+        var batteryLevel; // uint8_t
 
         // Page 2:
         var manufacturerID; // class Number / uint8_t      Manufacturer ID
@@ -77,6 +78,7 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
             pastSequenceNumber = sequenceNumber; // keine neuen Daten
             glucosePrediction = GLUCOSE_PREDICTION_UNKNOWN;
             nfcState = 0; // TODO: ENUM
+            batteryLevel = 0;
             manufacturerID = 0;
             serialNumber = 0;
             hardwareVersion = 0;
@@ -153,8 +155,10 @@ class ANT_FGM_Sensor extends Ant.GenericChannel
         {
             // payload
             // [1-3] cumulative_operating_time[3]
-            // [4-6] reserved[3]
+            // [4-5] reserved[2]
+            //   [6] battery_level
             //   [7] nfc_state
+            data.batteryLevel = payload[6];
             data.nfcState = payload[7];
         }
 

@@ -19,9 +19,9 @@
 typedef struct
 {
     uint8_t cumulative_operating_time[3];
-    uint8_t reserved[3];
-	  uint8_t nfc_state; // @see: CR95HF_STATES
-	// TODO: TAG UID ? --> Sensor ID sind 11 Zeichen!
+    uint8_t reserved[2];
+    uint8_t battery_level;
+    uint8_t nfc_state; // @see: CR95HF_STATES
 }ant_fgm_page1_data_layout_t;
 
 /**@brief Function for tracing page 1 and common data.
@@ -42,26 +42,28 @@ static void page1_data_log(ant_fgm_page1_data_t const * p_page_data)
 void ant_fgm_page_1_encode(uint8_t                    * p_page_buffer,
                            ant_fgm_page1_data_t const * p_page_data)
 {
-	ant_fgm_page1_data_layout_t * p_outcoming_data = (ant_fgm_page1_data_layout_t *)p_page_buffer;
-	uint32_t                      operating_time   = p_page_data->operating_time;
+  ant_fgm_page1_data_layout_t * p_outcoming_data = (ant_fgm_page1_data_layout_t *)p_page_buffer;
+  uint32_t                      operating_time   = p_page_data->operating_time;
 
-	UNUSED_PARAMETER(uint24_encode(operating_time, p_outcoming_data->cumulative_operating_time));
-	p_outcoming_data->nfc_state = p_page_data->nfc_state;
+  UNUSED_PARAMETER(uint24_encode(operating_time, p_outcoming_data->cumulative_operating_time));
+  p_outcoming_data->battery_level = p_page_data->battery_level;
+  p_outcoming_data->nfc_state = p_page_data->nfc_state;
 
-	page1_data_log(p_page_data);
+  page1_data_log(p_page_data);
 }
 
 
 void ant_fgm_page_1_decode(uint8_t const        * p_page_buffer,
                            ant_fgm_page1_data_t * p_page_data)
 {
-	ant_fgm_page1_data_layout_t const * p_incoming_data =
-			(ant_fgm_page1_data_layout_t *)p_page_buffer;
+  ant_fgm_page1_data_layout_t const * p_incoming_data =
+      (ant_fgm_page1_data_layout_t *)p_page_buffer;
 
-	uint32_t operating_time = uint24_decode(p_incoming_data->cumulative_operating_time);
+  uint32_t operating_time = uint24_decode(p_incoming_data->cumulative_operating_time);
 
-	p_page_data->operating_time = operating_time;
-	p_page_data->nfc_state = p_incoming_data->nfc_state;
+  p_page_data->operating_time = operating_time;
+  p_page_data->battery_level = p_incoming_data->battery_level;
+  p_page_data->nfc_state = p_incoming_data->nfc_state;
 
-	page1_data_log(p_page_data);
+  page1_data_log(p_page_data);
 }

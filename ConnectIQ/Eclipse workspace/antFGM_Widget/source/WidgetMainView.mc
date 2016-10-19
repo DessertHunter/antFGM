@@ -107,30 +107,36 @@ class WidgetMainView extends Ui.View {
                     new_status_text = Rez.Strings.status_connected;
 
                     // NFC Zustand:
+                    var nfc_state_text;
                     if (NFC_STATE_UNKNOWN == mSensor.data.nfcState)
                     {
-                        View.findDrawableById("nfc_state").setText("unkown");
+                        nfc_state_text = Rez.Strings.nfc_state_unknown; // "unkown"
                     }
                     else if (NFC_STATE_SLEEPING == mSensor.data.nfcState)
                     {
-                        View.findDrawableById("nfc_state").setText("sleep");
+                    	nfc_state_text = Rez.Strings.nfc_state_sleeping; // "sleep"
                     }
                     else if (NFC_STATE_ANSWERING == mSensor.data.nfcState)
                     {
-                        View.findDrawableById("nfc_state").setText("answer");
+                    	nfc_state_text = "answer"; // TODO
                     }
                     else if (NFC_STATE_PROTOCOL == mSensor.data.nfcState)
                     {
-                        View.findDrawableById("nfc_state").setText("protocol");
+                    	nfc_state_text = "protocol"; // TODO: Rez.Strings.nfc_state_default;
                     }
                     else if (NFC_STATE_TAG_IN_RANGE == mSensor.data.nfcState)
                     {
-                        View.findDrawableById("nfc_state").setText("tag");
+                    	nfc_state_text = Rez.Strings.nfc_state_tag_in_range; // "tag"
                     }
                     else
                     {
-                        View.findDrawableById("nfc_state").setText("???");
+                    	nfc_state_text = "???";
                     }
+                    
+                    // Battery Zustand anhängen:
+                    nfc_state_text = nfc_state_text + " " + mSensor.data.batteryLevel + "%";
+                    
+                    View.findDrawableById("nfc_state").setText(nfc_state_text);
 
                     var glucose_value = mSensor.data.glucoseValue;
                     View.findDrawableById("value").setText(glucose_value.format("%u"));

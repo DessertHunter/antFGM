@@ -28,7 +28,8 @@
 typedef struct
 {
     uint32_t operating_time; ///< Operating time.
-	  uint8_t  nfc_state; // @see: CR95HF_STATES
+    uint8_t  battery_level; ///< Battery Level 0-100%
+    uint8_t  nfc_state; ///< @see: CR95HF_STATES
 } ant_fgm_page1_data_t;
 
 /**@brief Initialize page 1.
@@ -37,7 +38,8 @@ typedef struct
     (ant_fgm_page1_data_t)      \
     {                           \
         .operating_time = 0,    \
-        .nfc_state = 0,    \
+        .battery_level = 0,      \
+        .nfc_state = 0          \
     }
 
 /**@brief Function for encoding page 1.
