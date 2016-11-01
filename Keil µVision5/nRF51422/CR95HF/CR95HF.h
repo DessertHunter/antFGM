@@ -6,17 +6,24 @@
 #include <stdbool.h>
 
 
-// SPI HW-Konfiguration (MOSI/MISO/CLK PIN's usw.) wird in der nrf_drv_config.h vorgenommen!
-// Hier nur die Auswahl der zu verwendeten SPI-Instanz:
+// SPI HW-Configuration (MOSI/MISO/CLK pins...) see /config/<board>/nrf_drv_config.h
+// Used SPI instance:
 #define SPI_INSTANCE  0 /**< SPI instance index. */
+// Addional pins for Chip-Select (SS), CR95HF INT1 / IRQ_IN and optional CR95HF INT0 / IRQ_OUT pin:
+#if defined(BOARD_PCA10031)
+#  define CR95HF_CONFIG_CS_PIN        18 /**< Chip-Select (SS) */
+#  define CR95HF_CONFIG_IRQ_IN_PIN    20 /**< CR95HF INT1 / IRQ_IN Pin */
+#  define CR95HF_CONFIG_IRQ_OUT_PIN   19 /**< CR95HF INT0 / IRQ_OUT Pin */
+#elif defined(BOARD_ANTFGM_N5150)
+#  define CR95HF_CONFIG_CS_PIN        9 /**< Chip-Select (SS) */
+#  define CR95HF_CONFIG_IRQ_IN_PIN    6 /**< CR95HF INT1 / IRQ_IN Pin */
+#else
+#error "Board is unknown set CR95HF_CONFIG_*"
+#endif
 
-#define CR95HF_CONFIG_CS_PIN        18 /**< Chip-Select (SS) */
-#define CR95HF_CONFIG_IRQ_IN_PIN    20 /**< CR95HF INT1 / IRQ_IN Pin */
-#define CR95HF_CONFIG_IRQ_OUT_PIN   19 /**< CR95HF INT0 / IRQ_OUT Pin */
 
-
-#define CR95HF_MAX_RX        255 // Datentyp ist uint8_t!
-#define CR95HF_READY_TIMEOUT 50 /* 0 for endless waiting else  ms to wait */
+#define CR95HF_MAX_RX        255  // Datatype is uint8_t!
+#define CR95HF_READY_TIMEOUT 50   /* 0 for endless waiting else  ms to wait */
 
 
 typedef enum {

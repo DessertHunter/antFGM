@@ -9,3 +9,26 @@ battery measurement based on:
 Scheduler Tutorial:          https://devzone.nordicsemi.com/tutorials/23/
 Application Timer Tutorial   https://devzone.nordicsemi.com/tutorials/19/
 
+
+BSP-Switch:
+ * Project #define settings C++/ASM:		 BOARD_PCA10031 			BOARD_ANTFGM_N5150
+ * Project Include-Dir settings:				 /config/pca10031/		/config/antFGM_N5150
+
+
+Hardware:
+
+SPI:
+P6 (SCK) 		 17=P005 (CLK)
+P5 (MOSI) 	 16=P008 (MOSI!)
+P4 (MISO) 	 15=P011 (MISO!)
+P3 (SS) 		 14=P009
+
+Startup-Sequence / Wakeup-Puls:
+P10 (DOUT)	 nicht ben�tigt! (IRQ_OUT/TX)
+P2 (DIN)		 13=P006 (IRQ_IN/RX)
+
+ADC:
+V_Batt R1/R2	 7=P002/ADC3
+
+LED:
++3.3V					 6=P023

@@ -332,9 +332,9 @@
             <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--c99</MiscControls>
-              <Define>BLE_STACK_SUPPORT_REQD ANT_STACK_SUPPORT_REQD BOARD_PCA10031 NRF_LOG_USES_RTT S310 NRF51 SOFTDEVICE_PRESENT SWI_DISABLE0 DEBUG</Define>
+              <Define>BLE_STACK_SUPPORT_REQD ANT_STACK_SUPPORT_REQD BOARD_ANTFGM_N5150 NRF_LOG_USES_RTT S310 NRF51 SOFTDEVICE_PRESENT SWI_DISABLE0 DEBUG</Define>
               <Undefine></Undefine>
-              <IncludePath>.\ANT_FGM_Profile;.\ANT_FGM_Profile\pages;.\ANT_FGM_Profile\pages\logger;.\ANT_FGM_Profile\utils;.\bsp;.\config;.\config\pca10031;.\CR95HF;.\LibreSensor;.\nRF5_SDK10\components\toolchain;.\nRF5_SDK10\components\ant\ant_channel_config;.\nRF5_SDK10\components\ant\ant_key_manager;.\nRF5_SDK10\components\ant\ant_key_manager\config;.\nRF5_SDK10\components\ant\ant_stack_config;.\nRF5_SDK10\components\ant\ant_state_indicator;.\nRF5_SDK10\components\ble\ble_services\ble_bas;.\nRF5_SDK10\components\ble\ble_services\ble_dis;.\nRF5_SDK10\components\ble\ble_services\ble_gls;.\nRF5_SDK10\components\ble\ble_racp;.\nRF5_SDK10\components\ble\common;.\nRF5_SDK10\components\ble\device_manager;.\nRF5_SDK10\components\drivers_nrf\common;.\nRF5_SDK10\components\drivers_nrf\delay;.\nRF5_SDK10\components\drivers_nrf\gpiote;.\nRF5_SDK10\components\drivers_nrf\config;.\nRF5_SDK10\components\drivers_nrf\hal;.\nRF5_SDK10\components\drivers_nrf\pstorage;.\nRF5_SDK10\components\drivers_nrf\spi_master;.\nRF5_SDK10\components\drivers_nrf\uart;.\nRF5_SDK10\components\libraries\button;.\nRF5_SDK10\components\libraries\scheduler;.\nRF5_SDK10\components\libraries\sensorsim;.\nRF5_SDK10\components\libraries\timer;.\nRF5_SDK10\components\libraries\trace;.\nRF5_SDK10\components\libraries\uart;.\nRF5_SDK10\components\libraries\util;.\nRF5_SDK10\components\softdevice\common\softdevice_handler;.\nRF5_SDK10\components\softdevice\s310\headers;.\segger_rtt</IncludePath>
+              <IncludePath>.\ANT_FGM_Profile;.\ANT_FGM_Profile\pages;.\ANT_FGM_Profile\pages\logger;.\ANT_FGM_Profile\utils;.\bsp;.\config;.\config\antFGM_N5150;.\CR95HF;.\LibreSensor;.\nRF5_SDK10\components\toolchain;.\nRF5_SDK10\components\ant\ant_channel_config;.\nRF5_SDK10\components\ant\ant_key_manager;.\nRF5_SDK10\components\ant\ant_key_manager\config;.\nRF5_SDK10\components\ant\ant_stack_config;.\nRF5_SDK10\components\ant\ant_state_indicator;.\nRF5_SDK10\components\ble\ble_services\ble_bas;.\nRF5_SDK10\components\ble\ble_services\ble_dis;.\nRF5_SDK10\components\ble\ble_services\ble_gls;.\nRF5_SDK10\components\ble\ble_racp;.\nRF5_SDK10\components\ble\common;.\nRF5_SDK10\components\ble\device_manager;.\nRF5_SDK10\components\drivers_nrf\common;.\nRF5_SDK10\components\drivers_nrf\delay;.\nRF5_SDK10\components\drivers_nrf\gpiote;.\nRF5_SDK10\components\drivers_nrf\config;.\nRF5_SDK10\components\drivers_nrf\hal;.\nRF5_SDK10\components\drivers_nrf\pstorage;.\nRF5_SDK10\components\drivers_nrf\spi_master;.\nRF5_SDK10\components\drivers_nrf\uart;.\nRF5_SDK10\components\libraries\button;.\nRF5_SDK10\components\libraries\scheduler;.\nRF5_SDK10\components\libraries\sensorsim;.\nRF5_SDK10\components\libraries\timer;.\nRF5_SDK10\components\libraries\trace;.\nRF5_SDK10\components\libraries\uart;.\nRF5_SDK10\components\libraries\util;.\nRF5_SDK10\components\softdevice\common\softdevice_handler;.\nRF5_SDK10\components\softdevice\s310\headers;.\segger_rtt</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -490,6 +490,11 @@
               <FileName>bsp_btn_ant.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\bsp\bsp_btn_ant.c</FilePath>
+            </File>
+            <File>
+              <FileName>antFGM_N5150.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\bsp\antFGM_N5150.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -2351,6 +2356,11 @@
               <FileName>bsp_btn_ant.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\bsp\bsp_btn_ant.c</FilePath>
+            </File>
+            <File>
+              <FileName>antFGM_N5150.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\bsp\antFGM_N5150.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -757,8 +757,11 @@ bool initCR95HF(void)
 
   // IRQ_IN Pin
   nrf_gpio_cfg_output(CR95HF_CONFIG_IRQ_IN_PIN);
+  
+#if defined(CR95HF_CONFIG_IRQ_OUT_PIN)
   // IRQ_OUT Pin
-  nrf_gpio_cfg_input(CR95HF_CONFIG_IRQ_OUT_PIN, NRF_GPIO_PIN_NOPULL); // TOOD_CS: Pin pullup resistor disabled
+  nrf_gpio_cfg_input(CR95HF_CONFIG_IRQ_OUT_PIN, NRF_GPIO_PIN_NOPULL); // Pin pullup resistor disabled
+#endif
 
   stateCR95HF = CR95HF_STATE_UNKNOWN;
   CR95HF_DEBUG("CR95HF: state is now UNKNOWN\r\n");

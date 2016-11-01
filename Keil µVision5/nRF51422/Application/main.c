@@ -17,6 +17,13 @@
 #define ENABLE_BLE_SRV_GLS  0 ///< BLE Glucose Service
 #define ENABLE_BLE_SRV_BAS  0 ///< BLE Battery Service
 
+#define ENABLE_BLE_SRV_OTA  0 ///< BLE OTA/DFU Service
+
+#if (ENABLE_BLE_SRV_OTA == 1)
+#error TODO
+#endif // ENABLE_BLE_SRV_OTA
+
+
 /** @file
  *
  * @defgroup ble_sdk_app_ant_hrs_main main.c
@@ -100,7 +107,7 @@
 #if (ENABLE_BATTERY_MEASURE == 1)
 #include "nrf_adc.h"
 
-#define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
+#define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(10000, APP_TIMER_PRESCALER) /**< Battery level measurement interval ([ms] -> ticks). */
 APP_TIMER_DEF(m_battery_timer_id);
 
 static void battery_level_update(void);
@@ -110,6 +117,18 @@ static uint8_t m_battery_level_percent = 0; /**< Battery level in percent (0-100
 
 #if (ENABLE_BATTERY_MEASURE_SDK10 == 1)
 #define ADC_RESOLUTION              ADC_CONFIG_RES_10bit         // Calibration is only performed for 10-bit ADC resolution
+
+#define ADC_REF_VOLTAGE_IN_MILLIVOLTS   1200		/**< Reference voltage (in milli volts) used by ADC while doing conversion. */
+#define ADC_PRE_SCALING_COMPENSATION    3 			/**< The ADC is configured to use VDD with 1/3 prescaling as input. And hence the result of conversion is to be multiplied by 3 to get the actual value of the battery voltage.*/                                    
+#define ADC_PRE_SCALING_R1_R2           (10000/2200) 	/**< 10M / 2M2 resistor voltage devidor */                                    
+
+/**@brief Macro to convert the result of ADC conversion in millivolts.
+ *
+ * @param[in]  ADC_VALUE   ADC result.
+ * @retval     Result converted to millivolts.
+ */
+#define ADC_RESULT_IN_MILLI_VOLTS(ADC_VALUE)\
+                                 ((((ADC_VALUE) * ADC_REF_VOLTAGE_IN_MILLIVOLTS) / 1023) * ADC_PRE_SCALING_COMPENSATION * ADC_PRE_SCALING_R1_R2)
 #endif // ENABLE_BATTERY_MEASURE_SDK10
 
 
@@ -936,7 +955,7 @@ static void battery_level_update(void)
 {
   //battery_level = (uint8_t)sensorsim_measure(&m_battery_sim_state, &m_battery_sim_cfg);
 
-  NRF_LOG_DEBUG("\r\n    Triggering battery level update...\r\n");
+  NRF_LOG_DEBUG("\r\n Triggering battery level update...\r\n");
   app_sched_event_put(0,0,(app_sched_event_handler_t)adc_sample); //Put adc_sample function into the scheduler queue, which will then be executed in the main context (lowest priority) when app_sched_execute is called in the main loop
 }
 
@@ -987,9 +1006,9 @@ static void battery_level_meas_timeout_handler(void * p_context)
 */
 static __INLINE uint8_t lipo_level_in_percent(const uint16_t adc_result)
 {
-  uint8_t battery_level;
-  const uint16_t mvolts = (uint16_t)((float)adc_result * 6.5f); // TODO: ADC_RESULT_IN_MILLI_VOLTS
-
+  unsigned int battery_level;
+	const unsigned int mvolts = ADC_RESULT_IN_MILLI_VOLTS(adc_result);
+	
   if (mvolts >= 4200)
   {
     battery_level = 100;
@@ -1002,7 +1021,7 @@ static __INLINE uint8_t lipo_level_in_percent(const uint16_t adc_result)
   {
     battery_level = 60 - ((3800 - mvolts) * 25) / 100; // Section 2
   }
-  else if (mvolts > 2440)
+  else if (mvolts > 3500)
   {
     battery_level = 35 - ((3700 - mvolts) * 30) / 200; // Section 3
   }
@@ -1015,6 +1034,8 @@ static __INLINE uint8_t lipo_level_in_percent(const uint16_t adc_result)
     battery_level = 0;
   }
 
+	NRF_LOG_PRINTF("ADC: %d -> %dmV -> %d%%\r\n", adc_result, mvolts, battery_level); // log ADC conversion on UART
+	
   return battery_level;
 }
 
@@ -1051,7 +1072,6 @@ bool adc_calibrate(uint16_t adc_result, uint16_t * adc_result_calibrated, uint8_
 void ADC_IRQHandler(void)
 {
   uint16_t adc_result_calibrated;
-  uint8_t adc_result[2];
 
   /* Clear dataready event */
   NRF_ADC->EVENTS_END = 0;
@@ -1059,18 +1079,9 @@ void ADC_IRQHandler(void)
   // Attempt to calibrate the ADC result
   adc_calibrate(NRF_ADC->RESULT, &adc_result_calibrated, ADC_RESOLUTION);
 
-  NRF_LOG_PRINTF("ADC result: %X\r\n", adc_result_calibrated); // log ADC reult on UART
-
-  adc_result[0] = adc_result_calibrated;
-  adc_result[1] = adc_result_calibrated >> 8;
-
-  NRF_LOG_PRINTF("ADC result: %X%X\r\n", adc_result[0], adc_result[1]); // log ADC reult on UART
-
   // Update measured ADC value as battery level
   m_battery_level_percent = lipo_level_in_percent(adc_result_calibrated);
-  NRF_LOG_PRINTF("ADC result: %d => %d%%\r\n", adc_result_calibrated, m_battery_level_percent); // log ADC reult on UART
-   
-  
+
   // Release the external crystal
   sd_clock_hfclk_release();
 }
@@ -1098,7 +1109,7 @@ static void adc_event_handler(nrf_drv_adc_evt_t const * p_event)
     for (i = 0; i < p_event->data.done.size; i++)
     {
       printf("Sample value %d: %d\r\n", i+1, p_event->data.done.p_buffer[i]);
-      adc_sum_value += p_event->data.done.p_buffer[i];                           //Sum all values in ADC buffer
+      adc_sum_value += p_event->data.done.p_buffer[i];                             //Sum all values in ADC buffer
     }
     adc_average_value = adc_sum_value / p_event->data.done.size;                   //Calculate average value from all samples in the ADC buffer
     printf("Average ADC value: %d\r\n", adc_average_value);
@@ -1136,7 +1147,11 @@ static void adc_config(void)
   sd_nvic_EnableIRQ(ADC_IRQn);
 
   NRF_ADC->CONFIG	= (ADC_CONFIG_EXTREFSEL_None << ADC_CONFIG_EXTREFSEL_Pos) /* Bits 17..16 : ADC external reference pin selection. */
-                  | (ADC_CONFIG_PSEL_AnalogInput5 << ADC_CONFIG_PSEL_Pos)   /*!< Use analog input 2 as analog input. */
+#if defined(BOARD_ANTFGM_N5150)
+                  | (ADC_CONFIG_PSEL_AnalogInput3 << ADC_CONFIG_PSEL_Pos)   /*!< Use analog input 3 as analog input. */
+#else
+#error "Board is unknown set adc_config!"
+#endif
                   | (ADC_CONFIG_REFSEL_VBG << ADC_CONFIG_REFSEL_Pos)        /*!< Use internal 1.2V bandgap voltage as reference for conversion. */
                   | (ADC_CONFIG_INPSEL_AnalogInputOneThirdPrescaling << ADC_CONFIG_INPSEL_Pos) /*!< Analog input specified by PSEL with no prescaling used as input for the conversion. */
                   | (ADC_CONFIG_RES_8bit << ADC_CONFIG_RES_Pos);            /*!< 8bit ADC resolution. */ 
@@ -1293,13 +1308,6 @@ int main(void)
   // Enter main loop.
   for (;;)
   {
-    // Little TODO-List:
-    // - CR95HF schlafen legen
-    // - Fehler oder Error Rate? sozusagen ein Retry-Z�hler als Art Qualityidicator
-    // - Fehler/Erfolgsverhältnis?
-    // - Batteriestand
-    // - Sensorrestlaufzeit bzw. Fehler wenn abgelaufen
-
 #if (CR95HF_IS_ATTACHED == 1)
     UNUSED_VARIABLE(bsp_indication_set(CR95HF_BSP_USER_STATE));
 

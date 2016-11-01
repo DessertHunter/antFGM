@@ -40,6 +40,8 @@
   #include "n5_starterkit.h"
 #elif defined(BOARD_CUSTOM)
   #include "custom_board.h"
+#elif defined(BOARD_ANTFGM_N5150)
+  #include "antFGM_N5150.h"
 #else
 #error "Board is not defined"
 
